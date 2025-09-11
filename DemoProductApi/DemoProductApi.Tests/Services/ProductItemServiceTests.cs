@@ -1,0 +1,192 @@
+using DemoProductApi.Application.Interfaces.Services;
+using DemoProductApi.Application.Models;
+using DemoProductApi.Application.Models.Requests;
+using DemoProductApi.Application.Repositories;
+using DemoProductApi.Application.Services;
+using DemoProductApi.Domain;
+using DemoProductApi.Domain.Entities;
+using DemoProductApi.Tests.Utils;
+using FluentAssertions;
+using Moq;
+using NUnit.Framework;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace DemoProductApi.Tests.Services;
+
+[TestFixture]
+public class ProductItemServiceTests
+{
+    private Mock<IProductItemRepository> _repo = null!;
+    private ProductItemService _svc = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _repo = new Mock<IProductItemRepository>(MockBehavior.Strict);
+        _svc = new ProductItemService(_repo.Object);
+    }
+
+    [Test]
+    public async Task GetAsync_NotFound_ReturnsNull()
+    {
+        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync((ProductItem?)null);
+        var dto = await _svc.GetAsync(Guid.NewGuid());
+        dto.Should().BeNull();
+    }
+
+    [Test]
+    public async Task CreateAsync_AssignsNewId()
+    {
+        var request = new ProductItemCreateRequest
+        {
+            ProductId = Guid.NewGuid(),
+            Sku = "SKU-NEW",
+            Status = (int)Status.Active,
+            Weight = 1.2m,
+            Volume = 0.8m,
+            VariantValues =
+            {
+                new ProductItemVariantValueCreateRequest
+                {
+                    VariantOptionId = Guid.NewGuid(),
+                    VariantOptionValueId = Guid.NewGuid()
+                }
+            }
+        };
+
+        _repo.Setup(r => r.AddAsync(It.Is<ProductItem>(pi =>
+                pi.ProductItemId != Guid.Empty &&
+                pi.ProductId == request.ProductId &&
+                pi.Sku == request.Sku &&
+                pi.VariantValues.Count == 1), It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask);
+        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask);
+
+        var created = await _svc.CreateAsync(request);
+        created.ProductItemId.Should().NotBe(Guid.Empty);
+        created.Sku.Should().Be(request.Sku);
+        _repo.VerifyAll();
+    }
+
+    [Test]
+    public async Task UpdateAsync_IdMismatch_ReturnsFalse()
+    {
+        var dto = TestBuilders.NewProductItemDto();
+        var ok = await _svc.UpdateAsync(Guid.NewGuid(), dto);
+        ok.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task UpdateAsync_NotFound_ReturnsFalse()
+    {
+        var dto = TestBuilders.NewProductItemDto();
+        _repo.Setup(r => r.GetByIdAsync(dto.ProductItemId, true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync((ProductItem?)null);
+        var ok = await _svc.UpdateAsync(dto.ProductItemId, dto);
+        ok.Should().BeFalse();
+        _repo.VerifyAll();
+    }
+
+    [Test]
+    public async Task UpdateAsync_DuplicateVariant_ReturnsFalse()
+    {
+        var existing = TestBuilders.NewProductItem();
+        _repo.Setup(r => r.GetByIdAsync(existing.ProductItemId, true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
+
+        var dup = Guid.NewGuid();
+        var dto = new ProductItemDto
+        {
+            ProductItemId = existing.ProductItemId,
+            ProductId = existing.ProductId,
+            Sku = "SKU-X",
+            Status = (int)Status.Active,
+            Weight = 1,
+            Volume = 1,
+            VariantValues = new()
+            {
+                new ProductItemVariantValueDto { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() },
+                new ProductItemVariantValueDto { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() }
+            }
+        };
+
+        var ok = await _svc.UpdateAsync(existing.ProductItemId, dto);
+        ok.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task UpdateAsync_AddsAndRemovesVariants()
+    {
+        var existing = TestBuilders.NewProductItem();
+        var existingOptionId = Guid.NewGuid();
+        existing.VariantValues.Add(new ProductItemVariantValue
+        {
+            ProductItemId = existing.ProductItemId,
+            VariantOptionId = existingOptionId,
+            VariantOptionValueId = Guid.NewGuid()
+        });
+
+        _repo.Setup(r => r.GetByIdAsync(existing.ProductItemId, true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
+        _repo.Setup(r => r.Update(existing));
+        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask);
+
+        var dto = new ProductItemDto
+        {
+            ProductItemId = existing.ProductItemId,
+            ProductId = existing.ProductId,
+            Sku = "SKU-UP",
+            Status = (int)Status.Active,
+            Weight = 2,
+            Volume = 2,
+            VariantValues = new()
+            {
+                new ProductItemVariantValueDto
+                {
+                    VariantOptionId = Guid.NewGuid(),
+                    VariantOptionValueId = Guid.NewGuid()
+                },
+                new ProductItemVariantValueDto
+                {
+                    VariantOptionId = Guid.NewGuid(),
+                    VariantOptionValueId = Guid.NewGuid()
+                }
+            }
+        };
+
+        var ok = await _svc.UpdateAsync(existing.ProductItemId, dto);
+        ok.Should().BeTrue();
+        existing.VariantValues.Should().HaveCount(2);
+        _repo.VerifyAll();
+    }
+
+    [Test]
+    public async Task DeleteAsync_NotFound_ReturnsFalse()
+    {
+        var id = Guid.NewGuid();
+        _repo.Setup(r => r.GetByIdAsync(id, true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync((ProductItem?)null);
+        var ok = await _svc.DeleteAsync(id);
+        ok.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task DeleteAsync_Success()
+    {
+        var existing = TestBuilders.NewProductItem();
+        _repo.Setup(r => r.GetByIdAsync(existing.ProductItemId, true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
+        _repo.Setup(r => r.Remove(existing));
+        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask);
+        var ok = await _svc.DeleteAsync(existing.ProductItemId);
+        ok.Should().BeTrue();
+        _repo.VerifyAll();
+    }
+}

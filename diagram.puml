@@ -1,0 +1,182 @@
+@startuml
+' ===== Style =====
+left to right direction
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam classBorderColor Black
+skinparam classBackgroundColor White
+skinparam shadowing false
+
+' ===== Entities =====
+entity "Product" as Product {
+  *product_id : UUID <<PK, NN>>
+  --
+  name : string <<NN>>
+  sku_prefix : string
+  status : int <<NN>>
+  description : string
+  created_at : datetime <<NN>>
+  updated_at : datetime <<NN>>
+}
+
+entity "VariantOption" as VariantOption {
+  *variant_option_id : UUID <<PK, NN>>
+  --
+  product_id : UUID <<FK, NN>>
+  name : string <<NN>>
+}
+
+entity "VariantOptionValue" as VariantOptionValue {
+  *variant_option_value_id : UUID <<PK, NN>>
+  --
+  variant_option_id : UUID <<FK, NN>>
+  value : string <<NN>>
+  code : string
+}
+
+entity "ProductItem (SKU)" as ProductItem {
+  *product_item_id : UUID <<PK, NN>>
+  --
+  product_id : UUID <<FK, NN>>
+  sku : string <<NN, UQ>>
+  barcode : string
+  status : int <<NN>>
+  weight : decimal
+  volume : decimal
+  created_at : datetime <<NN>>
+  updated_at : datetime <<NN>>
+}
+
+entity "ProductItemVariantValue" as PIVV {
+  *product_item_id : UUID <<PK, FK, NN>>
+  *variant_option_id : UUID <<PK, FK, NN>>
+  --
+  variant_option_value_id : UUID <<FK, NN>>
+}
+
+entity "Location" as Location {
+  *location_id : UUID <<PK, NN>>
+  --
+  name : string <<NN>>
+  type : string
+  address1 : string
+  address2 : string
+  city : string
+  country : string
+}
+
+entity "Inventory" as Inventory {
+  *inventory_id : UUID <<PK, NN>>
+  --
+  product_item_id : UUID <<FK, NN>>
+  location_id : UUID <<FK, NN>>
+  on_hand : int <<NN>>
+  reserved : int <<NN>>
+  in_transit : int <<NN>>
+  reorder_point : int <<NN>>
+  updated_at : datetime <<NN>>
+}
+
+entity "Price" as Price {
+  *price_id : UUID <<PK, NN>>
+  --
+  entity_type : enum <<NN>>    ' product | item
+  entity_id : UUID <<NN>>
+  currency : string <<NN>>
+  list_price : decimal <<NN>>
+  sale_price : decimal         ' nullable
+  valid_from : date <<NN>>
+  valid_to : date              ' nullable
+}
+
+entity "Bundle" as Bundle {
+  *bundle_id : UUID <<PK, NN>>
+  --
+  name : string <<NN>>
+  description : string
+  status : int <<NN>>
+  created_at : datetime <<NN>>
+  updated_at : datetime <<NN>>
+}
+
+entity "BundleItem" as BundleItem {
+  *bundle_id : UUID <<PK, FK, NN>>
+  *child_id : UUID <<PK, NN>>
+  --
+  quantity : decimal <<NN>>
+}
+
+' entity "BundlePricingRule" as BundlePricingRule {
+'   *bundle_pricing_rule_id : UUID <<PK, NN>>
+'   --
+'   bundle_id : UUID <<FK, NN>>
+'   rule_type : enum <<NN>>       ' FIXED | PERCENT_OFF | SUM_PARTS
+'   amount : decimal              ' used for FIXED
+'   percent_off : decimal         ' used for PERCENT_OFF
+'   apply_to : enum <<NN>>        ' ALL | REQUIRED_ONLY | SPECIFIC_CHILDREN
+' }
+
+' ===== Relationships (use |{ for non-nullable FKs, o{ for nullable) =====
+Product            ||--|{ VariantOption         : "has options"
+VariantOption      ||--|{ VariantOptionValue    : "has values"
+
+Product            ||--|{ ProductItem           : "has SKUs"
+ProductItem        ||--|{ PIVV                  : "has variant"
+VariantOption      ||--|{ PIVV                  : "option"
+VariantOptionValue ||--|{ PIVV                  : "value"
+
+ProductItem         ||--|{ Inventory            : "stock"
+Location            ||--|{ Inventory            : "at location"
+
+Bundle              ||--|{ BundleItem           : "contains"
+BundleItem          }o--|| ProductItem          : "child item"
+
+' Price is polymorphic: can target Product OR ProductItem (visually optional from each side)
+Bundle      ||--o{ Price : "prices"
+Product     ||--o{ Price : "prices"
+ProductItem ||--o{ Price : "prices"
+
+' ===== Constraint / Index Notes =====
+note right of VariantOptionValue
+  Constraints:
+  - UNIQUE(variant_option_id, value)
+end note
+
+note right of ProductItem
+  Constraints:
+  - UNIQUE(sku)
+end note
+
+note right of PIVV
+  Constraints:
+  - PK(product_item_id, variant_option_id)
+  - (optional) UNIQUE(product_item_id, variant_option_value_id)
+  Indexes:
+  - (variant_option_id, variant_option_value_id)
+end note
+
+note right of Inventory
+  Constraints:
+  - UNIQUE(product_item_id, location_id)
+end note
+
+note right of Price
+  Indexes:
+  - (entity_type, entity_id, valid_from, valid_to)
+end note
+
+note right of BundleItem
+  Constraints:
+  - PK(bundle_id, child_id)
+end note
+
+legend right
+  <<PK>> primary key
+  <<FK>> foreign key (semantic)
+  <<NN>> not null (visual)
+  <<UQ>> unique (single column, visual)
+  Composite UNIQUE/INDEX listed in notes
+endlegend
+
+@enduml
