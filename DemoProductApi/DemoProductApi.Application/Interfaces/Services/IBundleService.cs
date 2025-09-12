@@ -8,6 +8,7 @@ public interface IBundleService
     Task<IReadOnlyList<BundleDto>> GetAllAsync(CancellationToken ct = default);
     Task<BundleDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<BundleDto> CreateAsync(BundleCreateRequest request, CancellationToken ct = default);
+    Task<List<BundleDto>> CreateBatchAsync(List<BundleCreateRequest> requests, CancellationToken ct = default);
     Task<bool> UpdateAsync(Guid id, BundleCreateRequest request, CancellationToken ct = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
 }

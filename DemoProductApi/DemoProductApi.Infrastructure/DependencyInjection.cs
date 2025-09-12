@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<IGenericRepository<Price>, PriceRepository>();
         services.AddScoped<IGenericRepository<Inventory>, InventoryRepository>();
         services.AddScoped<IGenericRepository<Location>, LocationRepository>();
+        services.AddScoped<IBundleRepository, BundleRepository>();
         return services;
     }
 }

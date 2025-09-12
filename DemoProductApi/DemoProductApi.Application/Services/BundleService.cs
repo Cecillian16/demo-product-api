@@ -6,7 +6,7 @@ using DemoProductApi.Application.Models.Requests;
 
 namespace DemoProductApi.Application.Services;
 
-public class BundleService(IGenericRepository<Bundle> repo) : IBundleService
+public class BundleService(IGenericRepository<Bundle> repo, IBundleRepository brepo) : IBundleService
 {
     public async Task<IReadOnlyList<BundleDto>> GetAllAsync(CancellationToken ct = default)
     {
@@ -26,6 +26,26 @@ public class BundleService(IGenericRepository<Bundle> repo) : IBundleService
         await repo.AddAsync(entity, ct);
         await repo.SaveChangesAsync(ct);
         return BundleMapper.ToDto(entity);
+    }
+
+    public async Task<List<BundleDto>> CreateBatchAsync(List<BundleCreateRequest> requests, CancellationToken ct = default)
+    {
+        var entities = new List<Bundle>();
+        foreach (var request in requests)
+        {
+            entities.Add(BundleMapper.ToEntity(request, Guid.Empty));
+        }
+
+        await brepo.InsertBatch(entities);
+        //await brepo.AddRangeAsync(entities, ct);
+        //await repo.SaveChangesAsync(ct);
+
+        var dtos = new List<BundleDto>();
+        foreach (var entity in entities)
+        {
+            dtos.Add(BundleMapper.ToDto(entity));
+        }
+        return dtos;
     }
 
     public async Task<bool> UpdateAsync(Guid id, BundleCreateRequest request, CancellationToken ct = default)

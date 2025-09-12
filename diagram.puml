@@ -167,10 +167,10 @@ note right of Price
   - (entity_type, entity_id, valid_from, valid_to)
 end note
 
-note right of BundleItem
-  Constraints:
-  - PK(bundle_id, child_id)
-end note
+' note right of BundleItem
+'   Constraints:
+'   - PK(bundle_id, child_id)
+' end note
 
 legend right
   <<PK>> primary key

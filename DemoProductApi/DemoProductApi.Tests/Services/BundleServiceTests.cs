@@ -19,13 +19,14 @@ namespace DemoProductApi.Tests.Services;
 public class BundleServiceTests
 {
     private Mock<IGenericRepository<Bundle>> _repo = null!;
+    private Mock<IBundleRepository> _brepo = null!;
     private BundleService _svc = null!;
 
     [SetUp]
     public void SetUp()
     {
         _repo = new Mock<IGenericRepository<Bundle>>(MockBehavior.Strict);
-        _svc = new BundleService(_repo.Object);
+        _svc = new BundleService(_repo.Object, _brepo.Object);
     }
 
     [Test]
@@ -49,7 +50,7 @@ public class BundleServiceTests
             Status = (int)Status.Active,
             Items =
             {
-                new BundleItemDto { ChildProductItemId = Guid.NewGuid(), Quantity = 2 }
+                new BundleItemCreateRequest { ChildProductItemId = Guid.NewGuid(), Quantity = 2 }
             }
         };
 
@@ -71,18 +72,18 @@ public class BundleServiceTests
     [Test]
     public async Task UpdateAsync_IdMismatch_ReturnsFalse()
     {
-        var dto = TestBuilders.NewBundleDto();
-        var ok = await _svc.UpdateAsync(Guid.NewGuid(), dto);
+        var request = TestBuilders.NewBundleRequest();
+        var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
     }
 
     [Test]
     public async Task UpdateAsync_NotFound_ReturnsFalse()
     {
-        var dto = TestBuilders.NewBundleDto();
-        _repo.Setup(r => r.GetByIdAsync(dto.BundleId, It.IsAny<CancellationToken>()))
+        var request = TestBuilders.NewBundleRequest();
+        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync((Bundle?)null);
-        var ok = await _svc.UpdateAsync(dto.BundleId, dto);
+        var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
         _repo.VerifyAll();
     }
@@ -97,15 +98,14 @@ public class BundleServiceTests
 
         var newChildId = Guid.NewGuid();
 
-        var dto = new BundleDto
+        var request = new BundleCreateRequest
         {
-            BundleId = bundle.BundleId,
             Name = "Updated",
             Description = "New Desc",
             Status = (int)Status.Active,
             Items =
             {
-                new BundleItemDto { ChildProductItemId = newChildId, Quantity = 3 }
+                new BundleItemCreateRequest { ChildProductItemId = newChildId, Quantity = 3 }
             }
         };
 
@@ -115,7 +115,7 @@ public class BundleServiceTests
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
              .Returns(Task.CompletedTask);
 
-        var ok = await _svc.UpdateAsync(bundle.BundleId, dto);
+        var ok = await _svc.UpdateAsync(bundle.BundleId, request);
 
         ok.Should().BeTrue();
         bundle.Items.Should().ContainSingle(i => i.ChildProductItemId == newChildId);

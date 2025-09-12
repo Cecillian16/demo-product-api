@@ -76,18 +76,18 @@ public class ProductItemServiceTests
     [Test]
     public async Task UpdateAsync_IdMismatch_ReturnsFalse()
     {
-        var dto = TestBuilders.NewProductItemDto();
-        var ok = await _svc.UpdateAsync(Guid.NewGuid(), dto);
+        var request = TestBuilders.NewProductItemRequest();
+        var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
     }
 
     [Test]
     public async Task UpdateAsync_NotFound_ReturnsFalse()
     {
-        var dto = TestBuilders.NewProductItemDto();
-        _repo.Setup(r => r.GetByIdAsync(dto.ProductItemId, It.IsAny<CancellationToken>()))
+        var request = TestBuilders.NewProductItemRequest();
+        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync((ProductItem?)null);
-        var ok = await _svc.UpdateAsync(dto.ProductItemId, dto);
+        var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
         _repo.VerifyAll();
     }
@@ -100,9 +100,8 @@ public class ProductItemServiceTests
              .ReturnsAsync(existing);
 
         var dup = Guid.NewGuid();
-        var dto = new ProductItemDto
+        var request = new ProductItemCreateRequest
         {
-            ProductItemId = existing.ProductItemId,
             ProductId = existing.ProductId,
             Sku = "SKU-X",
             Status = (int)Status.Active,
@@ -110,12 +109,12 @@ public class ProductItemServiceTests
             Volume = 1,
             VariantValues = new()
             {
-                new ProductItemVariantValueDto { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() },
-                new ProductItemVariantValueDto { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() }
+                new ProductItemVariantValueCreateRequest { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() },
+                new ProductItemVariantValueCreateRequest { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() }
             }
         };
 
-        var ok = await _svc.UpdateAsync(existing.ProductItemId, dto);
+        var ok = await _svc.UpdateAsync(existing.ProductItemId, request);
         ok.Should().BeFalse();
     }
 
@@ -137,9 +136,8 @@ public class ProductItemServiceTests
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
              .Returns(Task.CompletedTask);
 
-        var dto = new ProductItemDto
+        var request = new ProductItemCreateRequest
         {
-            ProductItemId = existing.ProductItemId,
             ProductId = existing.ProductId,
             Sku = "SKU-UP",
             Status = (int)Status.Active,
@@ -147,12 +145,12 @@ public class ProductItemServiceTests
             Volume = 2,
             VariantValues = new()
             {
-                new ProductItemVariantValueDto
+                new ProductItemVariantValueCreateRequest
                 {
                     VariantOptionId = Guid.NewGuid(),
                     VariantOptionValueId = Guid.NewGuid()
                 },
-                new ProductItemVariantValueDto
+                new ProductItemVariantValueCreateRequest
                 {
                     VariantOptionId = Guid.NewGuid(),
                     VariantOptionValueId = Guid.NewGuid()
@@ -160,7 +158,7 @@ public class ProductItemServiceTests
             }
         };
 
-        var ok = await _svc.UpdateAsync(existing.ProductItemId, dto);
+        var ok = await _svc.UpdateAsync(existing.ProductItemId, request);
         ok.Should().BeTrue();
         existing.VariantValues.Should().HaveCount(2);
         _repo.VerifyAll();
@@ -238,8 +236,8 @@ public class ProductItemServiceTests
     [Test]
     public async Task UpdateAsync_EmptyId_ReturnsFalse()
     {
-        var dto = TestBuilders.NewProductItemDto();
-        var ok = await _svc.UpdateAsync(Guid.Empty, dto);
+        var request = TestBuilders.NewProductItemRequest();
+        var ok = await _svc.UpdateAsync(Guid.Empty, request);
         ok.Should().BeFalse();
     }
 
@@ -264,9 +262,8 @@ public class ProductItemServiceTests
              .Returns(Task.CompletedTask);
 
         var newValueId = Guid.NewGuid();
-        var dto = new ProductItemDto
+        var request = new ProductItemCreateRequest
         {
-            ProductItemId = existing.ProductItemId,
             ProductId = existing.ProductId,
             Sku = "SKU-CHANGED",
             Status = (int)Status.Active,
@@ -274,7 +271,7 @@ public class ProductItemServiceTests
             Volume = 3,
             VariantValues = new()
             {
-                new ProductItemVariantValueDto
+                new ProductItemVariantValueCreateRequest
                 {
                     VariantOptionId = optionId,
                     VariantOptionValueId = newValueId
@@ -282,7 +279,7 @@ public class ProductItemServiceTests
             }
         };
 
-        var ok = await _svc.UpdateAsync(existing.ProductItemId, dto);
+        var ok = await _svc.UpdateAsync(existing.ProductItemId, request);
         ok.Should().BeTrue();
         existing.VariantValues.Should().HaveCount(1);
         existing.VariantValues.Single().VariantOptionValueId.Should().Be(newValueId);

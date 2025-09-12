@@ -59,6 +59,14 @@ public static class TestBuilders
         Items = new()
     };
 
+    public static BundleCreateRequest NewBundleRequest() => new()
+    {
+        Name = "Bundle DTO",
+        Description = "Bundle DTO Desc",
+        Status = (int)Status.Active,
+        Items = new()
+    };
+
     public static ProductItem NewProductItem(Guid? productId = null) => new()
     {
         ProductItemId = Guid.NewGuid(),
@@ -76,6 +84,16 @@ public static class TestBuilders
         ProductItemId = id ?? Guid.NewGuid(),
         ProductId = productId ?? Guid.NewGuid(),
         Sku = "SKU-D",
+        Status = (int)Status.Active,
+        Weight = 3.3m,
+        Volume = 2.2m,
+        VariantValues = new()
+    };
+
+    public static ProductItemCreateRequest NewProductItemRequest(Guid? productId = null) => new()
+    {
+        ProductId = productId ?? Guid.NewGuid(),
+        Sku = "SKU-H",
         Status = (int)Status.Active,
         Weight = 3.3m,
         Volume = 2.2m,

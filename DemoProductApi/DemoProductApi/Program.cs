@@ -1,11 +1,14 @@
+using DemoProductApi.Application.Interfaces.Services;
+using DemoProductApi.Application.Services;
 using DemoProductApi.Infrastructure;
+using DemoProductApi.Infrastructure.Seed;
+using DemoProductApi.Validators;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
-using DemoProductApi.Validators;
-using DemoProductApi.Application.Interfaces.Services;
-using DemoProductApi.Application.Services;
-using DemoProductApi.Infrastructure.Seed;
+using Npgsql;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace DemoProductApi
 {
@@ -24,6 +27,8 @@ namespace DemoProductApi
 
             builder.Services.AddDbContext<AppDbContext>(opts =>
                 opts.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+            builder.Services.AddScoped<IDbConnection>(sp =>
+                new NpgsqlConnection(builder.Configuration.GetConnectionString("Default")));
 
             builder.Services.AddScoped<IBundleService, BundleService>();
             builder.Services.AddScoped<IProductService, ProductService>();

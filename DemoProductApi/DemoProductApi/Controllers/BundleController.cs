@@ -21,10 +21,17 @@ public class BundleController(IBundleService service) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<BundleDto>> CreateAsync(BundleCreateRequest request, CancellationToken ct)
+    public async Task<ActionResult<BundleDto>> CreateBundleAsync(BundleCreateRequest request, CancellationToken ct)
     {
         var created = await service.CreateAsync(request, ct);
         return CreatedAtRoute("GetBundleById", new { id = created.BundleId }, created);
+    }
+
+    [HttpPost("batch")]
+    public async Task<ActionResult<List<BundleDto>>> CreateBundleBatchAsync(List<BundleCreateRequest> requests, CancellationToken ct)
+    {
+        var created = await service.CreateBatchAsync(requests, ct);
+        return Ok(created);
     }
 
     [HttpPut("{id:guid}")]
