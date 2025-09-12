@@ -7,6 +7,7 @@
 - .NET 8 SDK
 - PostgreSQL
 - EF Core Tool (migration)
+- Docker - optional
 
 # My Approach
 - Clean (Layered) Architecture
