@@ -8,7 +8,6 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System.Data;
-using System.Data.SqlClient;
 
 namespace DemoProductApi
 {
@@ -33,9 +32,9 @@ namespace DemoProductApi
             builder.Services.AddScoped<IBundleService, BundleService>();
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IProductItemService, ProductItemService>();
-            builder.Services.AddScoped<IPriceService, PriceService>();
-            builder.Services.AddScoped<IInventoryService, InventoryService>();
-            builder.Services.AddScoped<ILocationService, LocationService>();
+            //builder.Services.AddScoped<IPriceService, PriceService>();
+            //builder.Services.AddScoped<IInventoryService, InventoryService>();
+            //builder.Services.AddScoped<ILocationService, LocationService>();
 
             builder.Services.AddInfrastructureServices();
 

@@ -35,7 +35,7 @@ public class ProductController(IProductService service) : ControllerBase
     public async Task<IActionResult> UpdateProductAsync(Guid id, ProductCreateRequest request, CancellationToken ct)
     {
         var ok = await service.UpdateAsync(id, request, ct);
-        return ok ? NoContent() : BadRequest("Invalid or not found product id.");
+        return ok ? NoContent() : NotFound();
     }
 
     // DELETE: api/product/{id}

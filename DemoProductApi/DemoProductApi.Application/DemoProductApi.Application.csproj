@@ -7,6 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Interfaces\Services\IInventoryService.cs" />
+    <Compile Remove="Interfaces\Services\ILocationService.cs" />
+    <Compile Remove="Interfaces\Services\IPriceService.cs" />
+    <Compile Remove="Models\Requests\InventoryCreateRequest.cs" />
+    <Compile Remove="Models\Requests\LocationCreateRequest.cs" />
+    <Compile Remove="Models\Requests\PriceCreateRequest.cs" />
+    <Compile Remove="Services\InventoryService.cs" />
+    <Compile Remove="Services\LocationService.cs" />
+    <Compile Remove="Services\PriceService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
   </ItemGroup>
 

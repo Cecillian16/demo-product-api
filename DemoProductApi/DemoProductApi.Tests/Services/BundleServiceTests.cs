@@ -26,6 +26,7 @@ public class BundleServiceTests
     public void SetUp()
     {
         _repo = new Mock<IGenericRepository<Bundle>>(MockBehavior.Strict);
+        _brepo = new Mock<IBundleRepository>(MockBehavior.Strict);
         _svc = new BundleService(_repo.Object, _brepo.Object);
     }
 
@@ -73,6 +74,8 @@ public class BundleServiceTests
     public async Task UpdateAsync_IdMismatch_ReturnsFalse()
     {
         var request = TestBuilders.NewBundleRequest();
+        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+             .ReturnsAsync((Bundle?)null);
         var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
     }
@@ -109,17 +112,20 @@ public class BundleServiceTests
             }
         };
 
+        Bundle replacement = new Bundle();
         _repo.Setup(r => r.GetByIdAsync(bundle.BundleId, It.IsAny<CancellationToken>()))
              .ReturnsAsync(bundle);
-        _repo.Setup(r => r.Update(bundle));
-        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
-             .Returns(Task.CompletedTask);
+        _repo.Setup(r => r.Update(It.IsAny<Bundle>(), It.IsAny<Bundle>(), It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask).Callback<Bundle, Bundle, CancellationToken>((b, u, ct) =>
+             {
+                 replacement = u;
+             });
 
         var ok = await _svc.UpdateAsync(bundle.BundleId, request);
 
         ok.Should().BeTrue();
-        bundle.Items.Should().ContainSingle(i => i.ChildProductItemId == newChildId);
-        bundle.Items.Any(i => i.ChildProductItemId == oldChildId).Should().BeFalse();
+        replacement.Items.Should().ContainSingle(i => i.ChildProductItemId == newChildId);
+        replacement.Items.Any(i => i.ChildProductItemId == oldChildId).Should().BeFalse();
         _repo.VerifyAll();
     }
 

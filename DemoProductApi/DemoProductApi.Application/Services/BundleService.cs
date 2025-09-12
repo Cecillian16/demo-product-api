@@ -28,7 +28,7 @@ public class BundleService(IGenericRepository<Bundle> repo, IBundleRepository br
         return BundleMapper.ToDto(entity);
     }
 
-    public async Task<List<BundleDto>> CreateBatchAsync(List<BundleCreateRequest> requests, CancellationToken ct = default)
+    public async Task<List<BundleDto>> BulkCreateAsync(List<BundleCreateRequest> requests, CancellationToken ct = default)
     {
         var entities = new List<Bundle>();
         foreach (var request in requests)
@@ -36,9 +36,7 @@ public class BundleService(IGenericRepository<Bundle> repo, IBundleRepository br
             entities.Add(BundleMapper.ToEntity(request, Guid.Empty));
         }
 
-        await brepo.InsertBatch(entities);
-        //await brepo.AddRangeAsync(entities, ct);
-        //await repo.SaveChangesAsync(ct);
+        await brepo.BulkInsert(entities);
 
         var dtos = new List<BundleDto>();
         foreach (var entity in entities)
@@ -57,24 +55,9 @@ public class BundleService(IGenericRepository<Bundle> repo, IBundleRepository br
 
         var replacement = BundleMapper.ToEntity(request, id);
 
-        // Transaction ensures atomicity of delete + recreate
-        await using var tx = await repo.BeginTransactionAsync(ct);
-        try
-        {
-            repo.Remove(existing);
-            await repo.SaveChangesAsync(ct);          // executes DELETE + cascades
+        await repo.Update(existing, replacement, ct);
 
-            await repo.AddAsync(replacement, ct);     // stage INSERT + children
-            await repo.SaveChangesAsync(ct);          // executes INSERTS
-
-            await tx.CommitAsync(ct);
-            return true;
-        }
-        catch
-        {
-            await tx.RollbackAsync(ct);
-            throw;
-        }
+        return true;
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)

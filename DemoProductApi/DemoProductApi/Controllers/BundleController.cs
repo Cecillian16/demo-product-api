@@ -27,10 +27,10 @@ public class BundleController(IBundleService service) : ControllerBase
         return CreatedAtRoute("GetBundleById", new { id = created.BundleId }, created);
     }
 
-    [HttpPost("batch")]
-    public async Task<ActionResult<List<BundleDto>>> CreateBundleBatchAsync(List<BundleCreateRequest> requests, CancellationToken ct)
+    [HttpPost("bulk")]
+    public async Task<ActionResult<List<BundleDto>>> BulkCreateBundleAsync(List<BundleCreateRequest> requests, CancellationToken ct)
     {
-        var created = await service.CreateBatchAsync(requests, ct);
+        var created = await service.BulkCreateAsync(requests, ct);
         return Ok(created);
     }
 
@@ -38,7 +38,7 @@ public class BundleController(IBundleService service) : ControllerBase
     public async Task<IActionResult> UpdateBundleAsync(Guid id, BundleCreateRequest request, CancellationToken ct)
     {
         var ok = await service.UpdateAsync(id, request, ct);
-        return ok ? NoContent() : BadRequest("Invalid or not found bundle id.");
+        return ok ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:guid}")]

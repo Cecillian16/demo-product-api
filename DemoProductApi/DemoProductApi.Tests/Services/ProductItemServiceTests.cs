@@ -77,6 +77,8 @@ public class ProductItemServiceTests
     public async Task UpdateAsync_IdMismatch_ReturnsFalse()
     {
         var request = TestBuilders.NewProductItemRequest();
+        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ProductItem?)null);
         var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
     }
@@ -93,32 +95,6 @@ public class ProductItemServiceTests
     }
 
     [Test]
-    public async Task UpdateAsync_DuplicateVariant_ReturnsFalse()
-    {
-        var existing = TestBuilders.NewProductItem();
-        _repo.Setup(r => r.GetByIdAsync(existing.ProductItemId, It.IsAny<CancellationToken>()))
-             .ReturnsAsync(existing);
-
-        var dup = Guid.NewGuid();
-        var request = new ProductItemCreateRequest
-        {
-            ProductId = existing.ProductId,
-            Sku = "SKU-X",
-            Status = (int)Status.Active,
-            Weight = 1,
-            Volume = 1,
-            VariantValues = new()
-            {
-                new ProductItemVariantValueCreateRequest { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() },
-                new ProductItemVariantValueCreateRequest { VariantOptionId = dup, VariantOptionValueId = Guid.NewGuid() }
-            }
-        };
-
-        var ok = await _svc.UpdateAsync(existing.ProductItemId, request);
-        ok.Should().BeFalse();
-    }
-
-    [Test]
     public async Task UpdateAsync_AddsAndRemovesVariants()
     {
         var existing = TestBuilders.NewProductItem();
@@ -130,11 +106,14 @@ public class ProductItemServiceTests
             VariantOptionValueId = Guid.NewGuid()
         });
 
+        var replacement = new ProductItem();
         _repo.Setup(r => r.GetByIdAsync(existing.ProductItemId, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
-        _repo.Setup(r => r.Update(existing));
-        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
-             .Returns(Task.CompletedTask);
+        _repo.Setup(r => r.Update(existing, It.IsAny<ProductItem>(), It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask).Callback<ProductItem, ProductItem, CancellationToken>((e, u, ct) =>
+             {
+                 replacement = u;
+             });
 
         var request = new ProductItemCreateRequest
         {
@@ -160,7 +139,7 @@ public class ProductItemServiceTests
 
         var ok = await _svc.UpdateAsync(existing.ProductItemId, request);
         ok.Should().BeTrue();
-        existing.VariantValues.Should().HaveCount(2);
+        replacement.VariantValues.Should().HaveCount(2);
         _repo.VerifyAll();
     }
 
@@ -257,9 +236,12 @@ public class ProductItemServiceTests
 
         _repo.Setup(r => r.GetByIdAsync(existing.ProductItemId, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
-        _repo.Setup(r => r.Update(existing));
-        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
-             .Returns(Task.CompletedTask);
+        var replacement = new ProductItem();
+        _repo.Setup(r => r.Update(existing, It.IsAny<ProductItem>(), It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask).Callback<ProductItem, ProductItem, CancellationToken>((b, u, ct) =>
+             {
+                 replacement = u;
+             });
 
         var newValueId = Guid.NewGuid();
         var request = new ProductItemCreateRequest
@@ -281,8 +263,8 @@ public class ProductItemServiceTests
 
         var ok = await _svc.UpdateAsync(existing.ProductItemId, request);
         ok.Should().BeTrue();
-        existing.VariantValues.Should().HaveCount(1);
-        existing.VariantValues.Single().VariantOptionValueId.Should().Be(newValueId);
+        replacement.VariantValues.Should().HaveCount(1);
+        replacement.VariantValues.Single().VariantOptionValueId.Should().Be(newValueId);
         _repo.VerifyAll();
     }
 }

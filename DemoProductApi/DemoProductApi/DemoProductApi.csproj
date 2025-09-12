@@ -12,6 +12,9 @@
     <Compile Remove="Controllers\InventoryController.cs" />
     <Compile Remove="Controllers\LocationController.cs" />
     <Compile Remove="Controllers\PriceController.cs" />
+    <Compile Remove="Validators\InventoryValidator.cs" />
+    <Compile Remove="Validators\LocationValidator.cs" />
+    <Compile Remove="Validators\PriceValidator.cs" />
   </ItemGroup>
 
   <ItemGroup>

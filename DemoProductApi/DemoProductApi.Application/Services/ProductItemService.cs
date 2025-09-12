@@ -38,24 +38,9 @@ public class ProductItemService(IGenericRepository<ProductItem> repo) : IProduct
 
         var replacement = ProductItemMapper.ToEntity(request, id);
 
-        // Transaction ensures atomicity of delete + recreate
-        await using var tx = await repo.BeginTransactionAsync(ct);
-        try
-        {
-            repo.Remove(existing);
-            await repo.SaveChangesAsync(ct);          // executes DELETE + cascades
+        await repo.Update(existing, replacement, ct);
 
-            await repo.AddAsync(replacement, ct);     // stage INSERT + children
-            await repo.SaveChangesAsync(ct);          // executes INSERTS
-
-            await tx.CommitAsync(ct);
-            return true;
-        }
-        catch
-        {
-            await tx.RollbackAsync(ct);
-            throw;
-        }
+        return true;
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)

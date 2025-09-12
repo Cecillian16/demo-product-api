@@ -40,8 +40,26 @@ public sealed class ProductItemRepository(AppDbContext db) : IGenericRepository<
     public async Task AddAsync(ProductItem item, CancellationToken ct = default)
         => await db.ProductItems.AddAsync(item, ct);
 
-    public void Update(ProductItem item)
-        => db.ProductItems.Update(item);
+    public async Task Update(ProductItem existing, ProductItem replacement, CancellationToken ct = default)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+
+        try
+        {
+            db.ProductItems.Remove(existing);
+            await db.SaveChangesAsync(ct);
+
+            await db.ProductItems.AddAsync(replacement, ct);
+            await db.SaveChangesAsync(ct);
+
+            await tx.CommitAsync(ct);
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            throw;
+        }
+    }
 
     public void Remove(ProductItem item)
         => db.ProductItems.Remove(item);

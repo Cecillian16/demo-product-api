@@ -31,7 +31,7 @@ public class ProductItemController(IProductItemService service) : ControllerBase
     public async Task<IActionResult> UpdateProductItem(Guid id, ProductItemCreateRequest request, CancellationToken ct)
     {
         var ok = await service.UpdateAsync(id, request, ct);
-        return ok ? NoContent() : BadRequest("Invalid or not found product item id or duplicate variant options.");
+        return ok ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:guid}")]

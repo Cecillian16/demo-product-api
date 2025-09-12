@@ -12,9 +12,9 @@ public static class DependencyInjection
         services.AddScoped<IGenericRepository<Product>, ProductRepository>();
         services.AddScoped<IGenericRepository<Bundle>, BundleRepository>();
         services.AddScoped<IGenericRepository<ProductItem>, ProductItemRepository>();
-        services.AddScoped<IGenericRepository<Price>, PriceRepository>();
-        services.AddScoped<IGenericRepository<Inventory>, InventoryRepository>();
-        services.AddScoped<IGenericRepository<Location>, LocationRepository>();
+        //services.AddScoped<IGenericRepository<Price>, PriceRepository>();
+        //services.AddScoped<IGenericRepository<Inventory>, InventoryRepository>();
+        //services.AddScoped<IGenericRepository<Location>, LocationRepository>();
         services.AddScoped<IBundleRepository, BundleRepository>();
         return services;
     }

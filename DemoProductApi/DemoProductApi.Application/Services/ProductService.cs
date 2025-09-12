@@ -29,7 +29,6 @@ public class ProductService(IGenericRepository<Product> repo) : IProductService
         return ProductMapper.ToDto(entity);
     }
 
-    // Replace strategy: delete existing product (and cascaded VariantOptions/Values) then recreate from DTO payload.
     public async Task<bool> UpdateAsync(Guid id, ProductCreateRequest request, CancellationToken ct = default)
     {
         if (id == Guid.Empty) return false;
@@ -39,33 +38,13 @@ public class ProductService(IGenericRepository<Product> repo) : IProductService
 
         var originalCreatedAt = existing.CreatedAt;
         var replacement = ProductMapper.ToEntity(request, id);
-        replacement.CreatedAt = originalCreatedAt; // preserve original CreatedAt
+        replacement.CreatedAt = originalCreatedAt;
 
-        // Transaction ensures atomicity of delete + recreate
-        await using var tx = await repo.BeginTransactionAsync(ct);
-        try
-        {
-            repo.Remove(existing);
-            await repo.SaveChangesAsync(ct);          // executes DELETE + cascades
+        await repo.Update(existing, replacement, ct);
 
-            await repo.AddAsync(replacement, ct);     // stage INSERT + children
-            await repo.SaveChangesAsync(ct);          // executes INSERTS
-
-            await tx.CommitAsync(ct);
-            return true;
-        }
-        catch
-        {
-            await tx.RollbackAsync(ct);
-            throw;
-        }
+        return true;
     }
 
-    // Delete product and all related VariantOptions / VariantOptionValues.
-    // Assumes EF Core cascade delete is configured:
-    // Product -> VariantOption: OnDelete Cascade
-    // VariantOption -> VariantOptionValue: OnDelete Cascade
-    // If not, configure in AppDbContext.OnModelCreating or manually load & remove children.
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         if (id == Guid.Empty) return false;

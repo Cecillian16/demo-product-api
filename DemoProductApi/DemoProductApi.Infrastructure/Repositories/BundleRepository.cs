@@ -4,6 +4,7 @@ using DemoProductApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
 namespace DemoProductApi.Infrastructure.Repositories;
@@ -24,14 +25,10 @@ public sealed class BundleRepository(AppDbContext db, IDbConnection conn) : IGen
         return await q.FirstOrDefaultAsync(b => b.BundleId == bundleId, ct);
     }
 
-    public Task AddAsync(Bundle bundle, CancellationToken ct = default)
-        => db.Bundles.AddAsync(bundle, ct).AsTask();
+    public async Task AddAsync(Bundle bundle, CancellationToken ct = default)
+        => await db.Bundles.AddAsync(bundle, ct);
 
-    public Task AddRangeAsync(IEnumerable<Bundle> bundles, CancellationToken ct = default)
-        => db.Bundles.AddRangeAsync(bundles, ct);
-
-    // Fixed: robust multi-row INSERT with Dapper
-    public async Task InsertBatch(IEnumerable<Bundle> bundles)
+    public async Task BulkInsert(IEnumerable<Bundle> bundles)
     {
         var list = bundles as IList<Bundle> ?? bundles.ToList();
         if (list == null || list.Count == 0) return;
@@ -57,13 +54,12 @@ public sealed class BundleRepository(AppDbContext db, IDbConnection conn) : IGen
             bundleParams.Add($"u{i}", b.UpdatedAt);
         }
 
-        // Flatten bundle items (if any)
         var allItems = list
             .Where(b => b.Items != null && b.Items.Count > 0)
             .SelectMany(b => b.Items.Select(it =>
             {
                 if (it.Id == Guid.Empty) it.Id = Guid.NewGuid();
-                it.BundleId = b.BundleId; // ensure FK consistency
+                it.BundleId = b.BundleId;
                 return it;
             }))
             .ToList();
@@ -107,8 +103,26 @@ public sealed class BundleRepository(AppDbContext db, IDbConnection conn) : IGen
         }
     }
 
-    public void Update(Bundle bundle)
-        => db.Bundles.Update(bundle);
+    public async Task Update(Bundle existing, Bundle replacement, CancellationToken ct = default)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+
+        try
+        {
+            db.Bundles.Remove(existing);
+            await db.SaveChangesAsync(ct);
+
+            await db.Bundles.AddAsync(replacement, ct);
+            await db.SaveChangesAsync(ct);
+
+            await tx.CommitAsync(ct);
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            throw;
+        }
+    }
 
     public void Remove(Bundle bundle)
         => db.Bundles.Remove(bundle);
