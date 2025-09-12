@@ -16,11 +16,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Price> Prices => Set<Price>();
     public DbSet<Bundle> Bundles => Set<Bundle>();
     public DbSet<BundleItem> BundleItems => Set<BundleItem>();
-    public DbSet<BundlePricingRule> BundlePricingRules => Set<BundlePricingRule>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
-        // PRODUCT
         b.Entity<Product>(e =>
         {
             e.HasKey(x => x.ProductId);
@@ -30,7 +28,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(x => new { x.Status, x.Name });
         });
 
-        // VARIANT OPTION
         b.Entity<VariantOption>(e =>
         {
             e.HasKey(x => x.VariantOptionId);
@@ -41,7 +38,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // VARIANT OPTION VALUE
         b.Entity<VariantOptionValue>(e =>
         {
             e.HasKey(x => x.VariantOptionValueId);
@@ -54,7 +50,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // PRODUCT ITEM (SKU)
         b.Entity<ProductItem>(e =>
         {
             e.HasKey(x => x.ProductItemId);
@@ -63,62 +58,50 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Status).HasConversion<int>();
             e.Property(x => x.Weight).HasPrecision(18, 3);
             e.Property(x => x.Volume).HasPrecision(18, 3);
-
             e.HasOne(x => x.Product)
              .WithMany(p => p.ProductItems)
              .HasForeignKey(x => x.ProductId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // PRODUCT ITEM VARIANT VALUE (bridge)
         b.Entity<ProductItemVariantValue>(e =>
         {
             e.HasKey(x => new { x.ProductItemId, x.VariantOptionId });
-
             e.HasOne(x => x.ProductItem)
              .WithMany(i => i.VariantValues)
              .HasForeignKey(x => x.ProductItemId)
              .OnDelete(DeleteBehavior.Cascade);
-
             e.HasOne(x => x.VariantOption)
              .WithMany()
              .HasForeignKey(x => x.VariantOptionId)
              .OnDelete(DeleteBehavior.Restrict);
-
             e.HasOne(x => x.VariantOptionValue)
              .WithMany(v => v.ProductItemVariantValues)
              .HasForeignKey(x => x.VariantOptionValueId)
              .OnDelete(DeleteBehavior.Restrict);
-
-            // Optional helper index to filter by option/value quickly
             e.HasIndex(x => new { x.VariantOptionId, x.VariantOptionValueId });
         });
 
-        // LOCATION
         b.Entity<Location>(e =>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(200).IsRequired();
         });
 
-        // INVENTORY
         b.Entity<Inventory>(e =>
         {
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.ProductItemId, x.LocationId }).IsUnique();
-
             e.HasOne(x => x.ProductItem)
              .WithMany(i => i.Inventories)
              .HasForeignKey(x => x.ProductItemId)
              .OnDelete(DeleteBehavior.Cascade);
-
             e.HasOne(x => x.Location)
              .WithMany(l => l.Inventories)
              .HasForeignKey(x => x.LocationId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // PRICE
         b.Entity<Price>(e =>
         {
             e.HasKey(x => x.Id);
@@ -129,7 +112,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(x => new { x.EntityType, x.EntityId, x.ValidFrom, x.ValidTo });
         });
 
-        // BUNDLE
         b.Entity<Bundle>(e =>
         {
             e.HasKey(x => x.BundleId);
@@ -138,51 +120,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(x => new { x.Status, x.Name });
         });
 
-        // BUNDLE ITEM (supports child ProductItem or Bundle)
         b.Entity<BundleItem>(e =>
         {
-            e.HasKey(x => new { x.BundleId, x.ChildId });
-            e.Property(x => x.Quantity).HasPrecision(18, 3);
+            e.HasKey(b => b.Id);
 
-            e.HasOne(x => x.Bundle)
-             .WithMany(bu => bu.Items)
-             .HasForeignKey(x => x.BundleId)
-             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(b => b.Bundle)
+                .WithMany(bu => bu.Items)
+                .HasForeignKey(b => b.BundleId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Optional convenience navigations (no FK enforced by EF for polymorphic target)
-            e.HasOne(x => x.ChildItem)
-             .WithMany()
-             .HasForeignKey(x => x.ChildId)
-             .OnDelete(DeleteBehavior.Restrict)
-             .IsRequired(false);
-
-            e.HasOne(x => x.ChildBundle)
-             .WithMany()
-             .HasForeignKey(x => x.ChildId)
-             .OnDelete(DeleteBehavior.Restrict)
-             .IsRequired(false);
+            e.HasOne(b => b.ChildProductItem)
+                .WithMany()
+                .HasForeignKey(b => b.ChildProductItemId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
-
-        // BUNDLE PRICING RULE
-        b.Entity<BundlePricingRule>(e =>
-        {
-            e.HasKey(x => x.BundlePricingRuleId);
-            e.Property(x => x.RuleType).HasConversion<int>();
-            e.Property(x => x.Amount).HasPrecision(18, 2);
-            e.Property(x => x.PercentOff).HasPrecision(5, 2);
-            e.Property(x => x.ApplyTo).HasConversion<int>();
-
-            e.HasOne(x => x.Bundle)
-             .WithMany(bu => bu.PricingRules)
-             .HasForeignKey(x => x.BundleId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // --- Optional checks for data hygiene (supported by EF Core for PostgreSQL via Npgsql) ---
-        // b.Entity<VariantOptionValue>()
-        //     .ToTable(t => t.HasCheckConstraint("ck_vov_value_not_empty", "length(value) > 0"));
-        //
-        // NOTE: The strict rule “ProductItemVariantValue.VariantOption belongs to same Product as ProductItem”
-        // is hard to enforce with a simple FK. Enforce in application service and/or DB trigger if critical.
     }
 }

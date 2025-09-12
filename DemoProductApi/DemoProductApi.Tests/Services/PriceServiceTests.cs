@@ -16,13 +16,13 @@ namespace DemoProductApi.Tests.Services;
 [TestFixture]
 public class PriceServiceTests
 {
-    private Mock<IPriceRepository> _repo = null!;
+    private Mock<IGenericRepository<Price>> _repo = null!;
     private PriceService _svc = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _repo = new Mock<IPriceRepository>(MockBehavior.Strict);
+        _repo = new Mock<IGenericRepository<Price>>(MockBehavior.Strict);
         _svc = new PriceService(_repo.Object);
     }
 
@@ -54,7 +54,7 @@ public class PriceServiceTests
     public async Task GetAsync_NotFound_ReturnsNull()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, false, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Price?)null);
         var price = await _svc.GetAsync(id);
         price.Should().BeNull();
@@ -104,7 +104,7 @@ public class PriceServiceTests
     public async Task UpdateAsync_NotFound_ReturnsFalse()
     {
         var price = new Price { Id = Guid.NewGuid(), Currency = "USD" };
-        _repo.Setup(r => r.GetByIdAsync(price.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(price.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Price?)null);
         var ok = await _svc.UpdateAsync(price.Id, price);
         ok.Should().BeFalse();
@@ -138,7 +138,7 @@ public class PriceServiceTests
             ValidTo = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(60))
         };
 
-        _repo.Setup(r => r.GetByIdAsync(existing.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(existing.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
         _repo.Setup(r => r.Update(existing));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -156,7 +156,7 @@ public class PriceServiceTests
     public async Task DeleteAsync_NotFound_ReturnsFalse()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Price?)null);
         var ok = await _svc.DeleteAsync(id);
         ok.Should().BeFalse();
@@ -167,7 +167,7 @@ public class PriceServiceTests
     public async Task DeleteAsync_Success()
     {
         var existing = new Price { Id = Guid.NewGuid(), ListPrice = 10m };
-        _repo.Setup(r => r.GetByIdAsync(existing.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(existing.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
         _repo.Setup(r => r.Remove(existing));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))

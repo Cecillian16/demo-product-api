@@ -9,6 +9,10 @@ namespace DemoProductApi.Controllers;
 [Route("api/productitem")]
 public class ProductItemController(IProductItemService service) : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ProductItemDto>>> GetAll(CancellationToken ct) =>
+        Ok(await service.GetAllAsync(ct));
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProductItemDto>> GetProductItem(Guid id, CancellationToken ct)
     {
@@ -24,9 +28,9 @@ public class ProductItemController(IProductItemService service) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateProductItem(Guid id, ProductItemDto dto, CancellationToken ct)
+    public async Task<IActionResult> UpdateProductItem(Guid id, ProductItemCreateRequest request, CancellationToken ct)
     {
-        var ok = await service.UpdateAsync(id, dto, ct);
+        var ok = await service.UpdateAsync(id, request, ct);
         return ok ? NoContent() : BadRequest("Invalid or not found product item id or duplicate variant options.");
     }
 

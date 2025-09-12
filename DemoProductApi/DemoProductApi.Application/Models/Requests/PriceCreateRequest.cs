@@ -1,5 +1,4 @@
 using DemoProductApi.Domain;
-using DemoProductApi.Domain.Entities;
 
 namespace DemoProductApi.Application.Models.Requests;
 

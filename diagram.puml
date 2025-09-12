@@ -81,7 +81,7 @@ entity "Inventory" as Inventory {
 entity "Price" as Price {
   *price_id : UUID <<PK, NN>>
   --
-  entity_type : enum <<NN>>    ' product | item
+  entity_type : enum <<NN>>    ' product | item | bundle
   entity_id : UUID <<NN>>
   currency : string <<NN>>
   list_price : decimal <<NN>>
@@ -101,8 +101,9 @@ entity "Bundle" as Bundle {
 }
 
 entity "BundleItem" as BundleItem {
-  *bundle_id : UUID <<PK, FK, NN>>
-  *child_id : UUID <<PK, NN>>
+  *id : UUID <<PK, NN>>
+  *bundle_id : UUID <<FK, NN>>
+  *child_id : UUID <<NN>>
   --
   quantity : decimal <<NN>>
 }

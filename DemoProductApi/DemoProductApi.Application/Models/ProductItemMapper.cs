@@ -1,3 +1,4 @@
+using DemoProductApi.Application.Models.Requests;
 using DemoProductApi.Domain;
 using DemoProductApi.Domain.Entities;
 
@@ -5,30 +6,14 @@ namespace DemoProductApi.Application.Models;
 
 public static class ProductItemMapper
 {
-    public static ProductItemDto ToDto(ProductItem entity) => new()
-    {
-        ProductItemId = entity.ProductItemId,
-        ProductId = entity.ProductId,
-        Sku = entity.Sku,
-        Status = (int)entity.Status,
-        Weight = entity.Weight,
-        Volume = entity.Volume,
-        VariantValues = entity.VariantValues?.Select(vv => new ProductItemVariantValueDto
-        {
-            VariantOptionId = vv.VariantOptionId,
-            VariantOptionValueId = vv.VariantOptionValueId
-        }).ToList() ?? new()
-    };
-
-    // For create: ignore any incoming ProductItemId, always generate new and set timestamps
-    public static ProductItem ToNewEntity(ProductItemDto dto)
+    public static ProductItem ToEntity(ProductItemCreateRequest dto, Guid id)
     {
         var now = DateTimeOffset.UtcNow;
-        var newId = Guid.NewGuid();
+        var productId = id != Guid.Empty ? id : Guid.NewGuid();
 
         var entity = new ProductItem
         {
-            ProductItemId = newId,
+            ProductItemId = productId,
             ProductId = dto.ProductId,
             Sku = dto.Sku,
             Status = (Status)dto.Status,
@@ -38,7 +23,7 @@ public static class ProductItemMapper
             UpdatedAt = now,
             VariantValues = dto.VariantValues?.Select(vv => new ProductItemVariantValue
             {
-                ProductItemId = newId,
+                ProductItemId = productId,
                 VariantOptionId = vv.VariantOptionId,
                 VariantOptionValueId = vv.VariantOptionValueId
             }).ToList() ?? new()
@@ -46,24 +31,25 @@ public static class ProductItemMapper
         return entity;
     }
 
-    // Legacy/general (trusting provided IDs) - prefer not to use on create
-    public static ProductItem ToEntity(ProductItemDto dto)
+    public static ProductItemDto ToDto(ProductItem entitiy)
     {
-        var entity = new ProductItem
+        var now = DateTimeOffset.UtcNow;
+
+        var productItem = new ProductItemDto
         {
-            ProductItemId = dto.ProductItemId,
-            ProductId = dto.ProductId,
-            Sku = dto.Sku,
-            Status = (Status)dto.Status,
-            Weight = dto.Weight,
-            Volume = dto.Volume,
-            VariantValues = dto.VariantValues?.Select(vv => new ProductItemVariantValue
+            ProductItemId = entitiy.ProductItemId,
+            ProductId = entitiy.ProductId,
+            Sku = entitiy.Sku,
+            Status = (int)entitiy.Status,
+            Weight = entitiy.Weight,
+            Volume = entitiy.Volume,
+            VariantValues = entitiy.VariantValues?.Select(vv => new ProductItemVariantValueDto
             {
-                ProductItemId = dto.ProductItemId,
                 VariantOptionId = vv.VariantOptionId,
                 VariantOptionValueId = vv.VariantOptionValueId
             }).ToList() ?? new()
         };
-        return entity;
+
+        return productItem;
     }
 }

@@ -1,5 +1,4 @@
 using DemoProductApi.Application.Models;
-using DemoProductApi.Domain;
 using DemoProductApi.Infrastructure;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;

@@ -18,7 +18,6 @@ public class BundleDtoValidator : AbstractValidator<BundleDto>
             .WithMessage("At least one bundle item is required.");
 
         RuleForEach(x => x.Items).SetValidator(new BundleItemDtoValidator());
-        RuleForEach(x => x.PricingRules).SetValidator(new BundlePricingRuleDtoValidator());
     }
 }
 
@@ -26,28 +25,10 @@ public class BundleItemDtoValidator : AbstractValidator<BundleItemDto>
 {
     public BundleItemDtoValidator()
     {
-        RuleFor(x => x.ChildId)
-            .NotEmpty();
+        RuleFor(x => x.ChildProductItemId)
+            .NotNull()
+            .WithMessage("Either ChildProductItemId must be provided.");
 
-        RuleFor(x => x.Quantity)
-            .GreaterThan(0);
-    }
-}
-
-public class BundlePricingRuleDtoValidator : AbstractValidator<BundlePricingRuleDto>
-{
-    public BundlePricingRuleDtoValidator()
-    {
-        RuleFor(x => x.RuleType)
-            .IsInEnum();
-
-        RuleFor(x => x.Amount)
-            .GreaterThanOrEqualTo(0).When(x => x.Amount.HasValue);
-
-        RuleFor(x => x.PercentOff)
-            .InclusiveBetween(0, 100).When(x => x.PercentOff.HasValue);
-
-        RuleFor(x => x.ApplyTo)
-            .IsInEnum();
+        RuleFor(x => x.Quantity).GreaterThan(0);
     }
 }

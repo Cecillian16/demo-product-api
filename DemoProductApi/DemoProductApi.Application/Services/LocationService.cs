@@ -5,13 +5,13 @@ using DemoProductApi.Application.Models.Requests;
 
 namespace DemoProductApi.Application.Services;
 
-public class LocationService(ILocationRepository repo) : ILocationService
+public class LocationService(IGenericRepository<Location> repo) : ILocationService
 {
     public Task<IReadOnlyList<Location>> GetAllAsync(CancellationToken ct = default) =>
         repo.GetAllAsync(ct);
 
     public Task<Location?> GetAsync(Guid id, CancellationToken ct = default) =>
-        repo.GetByIdAsync(id, asTracking: false, ct);
+        repo.GetByIdAsync(id, ct);
 
     public async Task<Location> CreateAsync(LocationCreateRequest request, CancellationToken ct = default)
     {
@@ -35,7 +35,7 @@ public class LocationService(ILocationRepository repo) : ILocationService
         if (id == Guid.Empty || id != location.Id)
             return false;
 
-        var existing = await repo.GetByIdAsync(id, asTracking: true, ct);
+        var existing = await repo.GetByIdAsync(id, ct);
         if (existing is null) return false;
 
         existing.Name = location.Name;
@@ -52,7 +52,7 @@ public class LocationService(ILocationRepository repo) : ILocationService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var existing = await repo.GetByIdAsync(id, asTracking: true, ct);
+        var existing = await repo.GetByIdAsync(id, ct);
         if (existing is null) return false;
 
         repo.Remove(existing);

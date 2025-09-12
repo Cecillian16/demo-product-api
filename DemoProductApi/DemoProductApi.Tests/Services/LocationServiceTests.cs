@@ -15,13 +15,13 @@ namespace DemoProductApi.Tests.Services;
 [TestFixture]
 public class LocationServiceTests
 {
-    private Mock<ILocationRepository> _repo = null!;
+    private Mock<IGenericRepository<Location>> _repo = null!;
     private LocationService _svc = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _repo = new Mock<ILocationRepository>(MockBehavior.Strict);
+        _repo = new Mock<IGenericRepository<Location>>(MockBehavior.Strict);
         _svc = new LocationService(_repo.Object);
     }
 
@@ -49,7 +49,7 @@ public class LocationServiceTests
     public async Task GetAsync_NotFound_ReturnsNull()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, false, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Location?)null);
         var loc = await _svc.GetAsync(id);
         loc.Should().BeNull();
@@ -96,7 +96,7 @@ public class LocationServiceTests
     public async Task UpdateAsync_NotFound_ReturnsFalse()
     {
         var entity = new Location { Id = Guid.NewGuid(), Name = "Old" };
-        _repo.Setup(r => r.GetByIdAsync(entity.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(entity.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Location?)null);
         var ok = await _svc.UpdateAsync(entity.Id, entity);
         ok.Should().BeFalse();
@@ -109,7 +109,7 @@ public class LocationServiceTests
         var existing = new Location { Id = Guid.NewGuid(), Name = "Before" };
         var incoming = new Location { Id = existing.Id, Name = "After" };
 
-        _repo.Setup(r => r.GetByIdAsync(existing.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(existing.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
         _repo.Setup(r => r.Update(existing));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -125,7 +125,7 @@ public class LocationServiceTests
     public async Task DeleteAsync_NotFound_ReturnsFalse()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Location?)null);
         var ok = await _svc.DeleteAsync(id);
         ok.Should().BeFalse();
@@ -136,7 +136,7 @@ public class LocationServiceTests
     public async Task DeleteAsync_Success()
     {
         var existing = new Location { Id = Guid.NewGuid(), Name = "ToDelete" };
-        _repo.Setup(r => r.GetByIdAsync(existing.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(existing.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
         _repo.Setup(r => r.Remove(existing));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))

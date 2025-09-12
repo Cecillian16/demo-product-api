@@ -1,5 +1,3 @@
-using System;
-
 namespace DemoProductApi.Application.Models;
 
 public class BundleDto
@@ -11,22 +9,10 @@ public class BundleDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public List<BundleItemDto> Items { get; set; } = new();
-    public List<BundlePricingRuleDto> PricingRules { get; set; } = new();
 }
 
 public class BundleItemDto
 {
-    public Guid BundleId { get; set; }
-    public Guid ChildId { get; set; }
+    public Guid? ChildProductItemId { get; set; }
     public decimal Quantity { get; set; }
-}
-
-public class BundlePricingRuleDto
-{
-    public Guid BundlePricingRuleId { get; set; }
-    public Guid BundleId { get; set; }
-    public int RuleType { get; set; }
-    public decimal? Amount { get; set; }
-    public decimal? PercentOff { get; set; }
-    public int ApplyTo { get; set; }
 }

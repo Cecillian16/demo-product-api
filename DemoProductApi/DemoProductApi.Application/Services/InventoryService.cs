@@ -5,13 +5,13 @@ using DemoProductApi.Application.Models.Requests;
 
 namespace DemoProductApi.Application.Services;
 
-public class InventoryService(IInventoryRepository repo) : IInventoryService
+public class InventoryService(IGenericRepository<Inventory> repo) : IInventoryService
 {
     public Task<IReadOnlyList<Inventory>> GetAllAsync(CancellationToken ct = default) =>
         repo.GetAllAsync(ct);
 
     public Task<Inventory?> GetAsync(Guid id, CancellationToken ct = default) =>
-        repo.GetByIdAsync(id, asTracking: false, ct);
+        repo.GetByIdAsync(id, ct);
 
     public async Task<Inventory> CreateAsync(InventoryCreateRequest request, CancellationToken ct = default)
     {
@@ -37,7 +37,7 @@ public class InventoryService(IInventoryRepository repo) : IInventoryService
         if (id == Guid.Empty || id != inventory.Id)
             return false;
 
-        var existing = await repo.GetByIdAsync(id, asTracking: true, ct);
+        var existing = await repo.GetByIdAsync(id, ct);
         if (existing is null) return false;
 
         existing.ProductItemId = inventory.ProductItemId;
@@ -55,7 +55,7 @@ public class InventoryService(IInventoryRepository repo) : IInventoryService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var existing = await repo.GetByIdAsync(id, asTracking: true, ct);
+        var existing = await repo.GetByIdAsync(id, ct);
         if (existing is null) return false;
 
         repo.Remove(existing);

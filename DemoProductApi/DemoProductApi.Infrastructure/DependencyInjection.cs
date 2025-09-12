@@ -1,4 +1,5 @@
 using DemoProductApi.Application.Repositories;
+using DemoProductApi.Domain.Entities;
 using DemoProductApi.Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,12 +9,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
-        services.AddScoped<IProductRepository, ProductRepository>();
-        services.AddScoped<IBundleRepository, BundleRepository>();
-        services.AddScoped<IProductItemRepository, ProductItemRepository>();
-        services.AddScoped<IPriceRepository, PriceRepository>();
-        services.AddScoped<IInventoryRepository, InventoryRepository>();
-        services.AddScoped<ILocationRepository, LocationRepository>();
+        services.AddScoped<IGenericRepository<Product>, ProductRepository>();
+        services.AddScoped<IGenericRepository<Bundle>, BundleRepository>();
+        services.AddScoped<IGenericRepository<ProductItem>, ProductItemRepository>();
+        services.AddScoped<IGenericRepository<Price>, PriceRepository>();
+        services.AddScoped<IGenericRepository<Inventory>, InventoryRepository>();
+        services.AddScoped<IGenericRepository<Location>, LocationRepository>();
         return services;
     }
 }

@@ -1,4 +1,3 @@
-using DemoProductApi.Application.Interfaces.Services;
 using DemoProductApi.Application.Models;
 using DemoProductApi.Application.Models.Requests;
 using DemoProductApi.Application.Repositories;
@@ -10,6 +9,7 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,20 +19,20 @@ namespace DemoProductApi.Tests.Services;
 [TestFixture]
 public class ProductServiceTests
 {
-    private Mock<IProductRepository> _repo = null!;
+    private Mock<IGenericRepository<Product>> _repo = null!;
     private ProductService _svc = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _repo = new Mock<IProductRepository>(MockBehavior.Strict);
+        _repo = new Mock<IGenericRepository<Product>>(MockBehavior.Strict);
         _svc = new ProductService(_repo.Object);
     }
 
     [Test]
     public async Task GetAsync_NotFound_ReturnsNull()
     {
-        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync((Product?)null);
         var result = await _svc.GetAsync(Guid.NewGuid());
         result.Should().BeNull();
@@ -43,7 +43,7 @@ public class ProductServiceTests
     public async Task GetAsync_Found_ReturnsDto()
     {
         var product = TestBuilders.NewProduct();
-        _repo.Setup(r => r.GetByIdAsync(product.ProductId, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(product.ProductId, It.IsAny<CancellationToken>()))
              .ReturnsAsync(product);
         var result = await _svc.GetAsync(product.ProductId);
         result.Should().NotBeNull();
@@ -94,8 +94,8 @@ public class ProductServiceTests
     [Test]
     public async Task UpdateAsync_IdMismatch_ReturnsFalse()
     {
-        var dto = TestBuilders.NewProductDto();
-        var ok = await _svc.UpdateAsync(Guid.NewGuid(), dto);
+        var request = TestBuilders.NewProductRequest();
+        var ok = await _svc.UpdateAsync(Guid.NewGuid(), request);
         ok.Should().BeFalse();
     }
 
@@ -103,34 +103,37 @@ public class ProductServiceTests
     public async Task UpdateAsync_NotFound_ReturnsFalse()
     {
         var dto = TestBuilders.NewProductDto();
-        _repo.Setup(r => r.GetByIdAsync(dto.ProductId, true, It.IsAny<CancellationToken>()))
+        var newProd = TestBuilders.NewProductRequest();
+        _repo.Setup(r => r.GetByIdAsync(dto.ProductId, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Product?)null);
-        var ok = await _svc.UpdateAsync(dto.ProductId, dto);
+        var ok = await _svc.UpdateAsync(dto.ProductId, newProd);
         ok.Should().BeFalse();
-        _repo.Verify(r => r.GetByIdAsync(dto.ProductId, true, It.IsAny<CancellationToken>()), Times.Once);
+        _repo.Verify(r => r.GetByIdAsync(dto.ProductId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task UpdateAsync_Success()
     {
         var product = TestBuilders.NewProduct();
+        var newProd = TestBuilders.NewProductRequest();
+
         var dto = new ProductDto
         {
             ProductId = product.ProductId,
             Name = "Updated",
             SkuPrefix = "UP",
             Description = "New Desc",
-            Status = (int)Status.Inactive,
+            Status = Status.Inactive,
             CreatedAt = product.CreatedAt,
             UpdatedAt = product.UpdatedAt,
             VariantOptions = new()
         };
-        _repo.Setup(r => r.GetByIdAsync(product.ProductId, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(product.ProductId, It.IsAny<CancellationToken>()))
              .ReturnsAsync(product);
         _repo.Setup(r => r.Update(product));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
              .Returns(Task.CompletedTask);
-        var ok = await _svc.UpdateAsync(product.ProductId, dto);
+        var ok = await _svc.UpdateAsync(product.ProductId, newProd);
         ok.Should().BeTrue();
         product.Name.Should().Be("Updated");
         product.Status.Should().Be(Status.Inactive);
@@ -141,7 +144,7 @@ public class ProductServiceTests
     public async Task DeleteAsync_NotFound_ReturnsFalse()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Product?)null);
         var ok = await _svc.DeleteAsync(id);
         ok.Should().BeFalse();
@@ -151,12 +154,82 @@ public class ProductServiceTests
     public async Task DeleteAsync_Success()
     {
         var product = TestBuilders.NewProduct();
-        _repo.Setup(r => r.GetByIdAsync(product.ProductId, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(product.ProductId, It.IsAny<CancellationToken>()))
              .ReturnsAsync(product);
         _repo.Setup(r => r.Remove(product));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
              .Returns(Task.CompletedTask);
         var ok = await _svc.DeleteAsync(product.ProductId);
+        ok.Should().BeTrue();
+        _repo.VerifyAll();
+    }
+
+    [Test]
+    public async Task GetAllAsync_Empty_ReturnsEmpty()
+    {
+        _repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+             .ReturnsAsync(Array.Empty<Product>());
+        var result = await _svc.GetAllAsync();
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+        _repo.VerifyAll();
+    }
+
+    [Test]
+    public async Task GetAllAsync_ReturnsDtos()
+    {
+        var p1 = TestBuilders.NewProduct();
+        var p2 = TestBuilders.NewProduct();
+        p1.Name = "A";
+        p2.Name = "B";
+
+        _repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+             .ReturnsAsync(new List<Product> { p1, p2 });
+
+        var list = await _svc.GetAllAsync();
+        list.Should().HaveCount(2);
+        list.Select(p => p.ProductId).Should().Contain(new[] { p1.ProductId, p2.ProductId });
+        _repo.VerifyAll();
+    }
+
+    [Test]
+    public async Task UpdateAsync_Succeeds()
+    {
+        var existing = TestBuilders.NewProduct();
+        var newProd = TestBuilders.NewProductRequest();
+
+        var dto = new ProductDto
+        {
+            ProductId = existing.ProductId,
+            Name = "Updated Name",
+            SkuPrefix = existing.SkuPrefix,
+            Status = Status.Inactive,
+            Description = "New Desc",
+            VariantOptions = new()
+            {
+                new VariantOptionDto
+                {
+                    VariantOptionId = Guid.NewGuid(),
+                    Name = "Material",
+                    Values =
+                    {
+                        new VariantOptionValueDto
+                        {
+                            VariantOptionValueId = Guid.NewGuid(),
+                            Value = "Cotton",
+                            Code = "COT"
+                        }
+                    }
+                }
+            }
+        };
+
+        _repo.Setup(r => r.GetByIdAsync(existing.ProductId, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
+        _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+             .Returns(Task.CompletedTask);
+
+        var ok = await _svc.UpdateAsync(existing.ProductId, newProd);
         ok.Should().BeTrue();
         _repo.VerifyAll();
     }

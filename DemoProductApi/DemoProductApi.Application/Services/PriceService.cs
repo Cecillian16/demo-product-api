@@ -5,13 +5,13 @@ using DemoProductApi.Application.Models.Requests;
 
 namespace DemoProductApi.Application.Services;
 
-public class PriceService(IPriceRepository repo) : IPriceService
+public class PriceService(IGenericRepository<Price> repo) : IPriceService
 {
     public Task<IReadOnlyList<Price>> GetAllAsync(CancellationToken ct = default) =>
         repo.GetAllAsync(ct);
 
     public Task<Price?> GetAsync(Guid id, CancellationToken ct = default) =>
-        repo.GetByIdAsync(id, asTracking: false, ct);
+        repo.GetByIdAsync(id, ct);
 
     public async Task<Price> CreateAsync(PriceCreateRequest request, CancellationToken ct = default)
     {
@@ -36,7 +36,7 @@ public class PriceService(IPriceRepository repo) : IPriceService
         if (id == Guid.Empty || id != price.Id)
             return false;
 
-        var existing = await repo.GetByIdAsync(id, asTracking: true, ct);
+        var existing = await repo.GetByIdAsync(id, ct);
         if (existing is null) return false;
 
         existing.EntityType = price.EntityType;
@@ -54,7 +54,7 @@ public class PriceService(IPriceRepository repo) : IPriceService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var existing = await repo.GetByIdAsync(id, asTracking: true, ct);
+        var existing = await repo.GetByIdAsync(id, ct);
         if (existing is null) return false;
 
         repo.Remove(existing);

@@ -1,3 +1,5 @@
+using DemoProductApi.Domain;
+
 namespace DemoProductApi.Application.Models;
 
 public class ProductDto
@@ -6,7 +8,7 @@ public class ProductDto
     public string Name { get; set; } = string.Empty;
     public string SkuPrefix { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public int Status { get; set; }
+    public Status Status { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public List<VariantOptionDto> VariantOptions { get; set; } = new();

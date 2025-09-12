@@ -19,6 +19,8 @@ namespace DemoProductApi
             builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
             builder.Services.AddValidatorsFromAssemblyContaining<BundleDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<ProductItemDtoValidator>();
+            // Added to allow validators to inspect route values
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDbContext<AppDbContext>(opts =>
                 opts.UseNpgsql(builder.Configuration.GetConnectionString("Default")));

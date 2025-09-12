@@ -1,3 +1,4 @@
+using DemoProductApi.Application.Models.Requests;
 using DemoProductApi.Domain;
 using DemoProductApi.Domain.Entities;
 
@@ -5,10 +6,10 @@ namespace DemoProductApi.Application.Models;
 
 public static class ProductMapper
 {
-    public static Product ToEntity(ProductDto dto)
+    public static Product ToEntity(ProductCreateRequest dto, Guid id)
     {
         var now = DateTimeOffset.UtcNow;
-        var productId = Guid.NewGuid();
+        var productId = id != Guid.Empty ? id : Guid.NewGuid();
 
         var product = new Product
         {
@@ -49,7 +50,7 @@ public static class ProductMapper
             Name = entity.Name,
             SkuPrefix = entity.SkuPrefix,
             Description = entity.Description,
-            Status = (int)entity.Status,
+            Status = entity.Status,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             VariantOptions = entity.VariantOptions?.Select(vo => new VariantOptionDto

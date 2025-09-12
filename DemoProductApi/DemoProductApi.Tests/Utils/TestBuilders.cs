@@ -1,4 +1,5 @@
 using DemoProductApi.Application.Models;
+using DemoProductApi.Application.Models.Requests;
 using DemoProductApi.Domain;
 using DemoProductApi.Domain.Entities;
 using System;
@@ -24,9 +25,18 @@ public static class TestBuilders
         Name = "Prod DTO",
         SkuPrefix = "PD",
         Description = "Dto Desc",
-        Status = (int)Status.Active,
+        Status = Status.Active,
         CreatedAt = DateTimeOffset.UtcNow,
         UpdatedAt = DateTimeOffset.UtcNow,
+        VariantOptions = new()
+    };
+
+    public static ProductCreateRequest NewProductRequest(Guid? id = null) => new()
+    {
+        Name = "Prod DTO",
+        SkuPrefix = "PD",
+        Description = "Dto Desc",
+        Status = (int)Status.Active,
         VariantOptions = new()
     };
 
@@ -46,8 +56,7 @@ public static class TestBuilders
         Name = "Bundle DTO",
         Description = "Bundle DTO Desc",
         Status = (int)Status.Active,
-        Items = new(),
-        PricingRules = new()
+        Items = new()
     };
 
     public static ProductItem NewProductItem(Guid? productId = null) => new()

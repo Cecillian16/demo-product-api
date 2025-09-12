@@ -7,80 +7,74 @@ using DemoProductApi.Application.Models.Requests;
 
 namespace DemoProductApi.Application.Services;
 
-public class ProductService(IProductRepository repo) : IProductService
+public class ProductService(IGenericRepository<Product> repo) : IProductService
 {
+    public async Task<IReadOnlyList<ProductDto>> GetAllAsync(CancellationToken ct = default)
+    {
+        var entities = await repo.GetAllAsync(ct);
+        return entities.Select(ProductMapper.ToDto).ToList();
+    }
+
     public async Task<ProductDto?> GetAsync(Guid id, CancellationToken ct = default)
     {
-        var entity = await repo.GetByIdAsync(id, includeDetails: true, ct);
+        var entity = await repo.GetByIdAsync(id, ct);
         return entity is null ? null : ProductMapper.ToDto(entity);
     }
 
     public async Task<ProductDto> CreateAsync(ProductCreateRequest request, CancellationToken ct = default)
     {
-        // Build a DTO without Ids; mapper will generate them.
-        var dto = new ProductDto
-        {
-            ProductId = Guid.Empty,
-            Name = request.Name,
-            SkuPrefix = request.SkuPrefix,
-            Description = request.Description,
-            Status = request.Status,
-            VariantOptions = request.VariantOptions.Select(vo => new VariantOptionDto
-            {
-                VariantOptionId = Guid.Empty,
-                Name = vo.Name,
-                Values = vo.Values.Select(v => new VariantOptionValueDto
-                {
-                    VariantOptionValueId = Guid.Empty,
-                    Value = v.Value,
-                    Code = v.Code
-                }).ToList()
-            }).ToList()
-        };
-
-        var entity = ProductMapper.ToEntity(dto);
+        var entity = ProductMapper.ToEntity(request, Guid.Empty);
         await repo.AddAsync(entity, ct);
         await repo.SaveChangesAsync(ct);
         return ProductMapper.ToDto(entity);
     }
 
-    public async Task<bool> UpdateAsync(Guid id, ProductDto dto, CancellationToken ct = default)
+    // Replace strategy: delete existing product (and cascaded VariantOptions/Values) then recreate from DTO payload.
+    public async Task<bool> UpdateAsync(Guid id, ProductCreateRequest request, CancellationToken ct = default)
     {
-        if (id == Guid.Empty || id != dto.ProductId)
-            return false;
+        if (id == Guid.Empty) return false;
 
-        var entity = await repo.GetByIdAsync(id, includeDetails: true, ct);
-        if (entity is null)
-            return false;
+        var existing = await repo.GetByIdAsync(id, ct);
+        if (existing is null) return false;
 
-        entity.Name = dto.Name;
-        entity.SkuPrefix = dto.SkuPrefix;
-        entity.Description = dto.Description;
-        entity.Status = (Status)dto.Status;
-        entity.UpdatedAt = DateTimeOffset.UtcNow;
+        var originalCreatedAt = existing.CreatedAt;
+        var replacement = ProductMapper.ToEntity(request, id);
+        replacement.CreatedAt = originalCreatedAt; // preserve original CreatedAt
 
-        repo.Update(entity);
-        await repo.SaveChangesAsync(ct);
-        return true;
+        // Transaction ensures atomicity of delete + recreate
+        await using var tx = await repo.BeginTransactionAsync(ct);
+        try
+        {
+            repo.Remove(existing);
+            await repo.SaveChangesAsync(ct);          // executes DELETE + cascades
+
+            await repo.AddAsync(replacement, ct);     // stage INSERT + children
+            await repo.SaveChangesAsync(ct);          // executes INSERTS
+
+            await tx.CommitAsync(ct);
+            return true;
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            throw;
+        }
     }
 
+    // Delete product and all related VariantOptions / VariantOptionValues.
+    // Assumes EF Core cascade delete is configured:
+    // Product -> VariantOption: OnDelete Cascade
+    // VariantOption -> VariantOptionValue: OnDelete Cascade
+    // If not, configure in AppDbContext.OnModelCreating or manually load & remove children.
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var entity = await repo.GetByIdAsync(id, includeDetails: true, ct);
-        if (entity is null)
-            return false;
+        if (id == Guid.Empty) return false;
+
+        var entity = await repo.GetByIdAsync(id, ct);
+        if (entity is null) return false;
 
         repo.Remove(entity);
         await repo.SaveChangesAsync(ct);
         return true;
-    }
-
-    // Keeping domain entities for list; change to DTO projection if needed.
-    public async Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(
-        int page, int size, string? search, Status? status, CancellationToken ct = default)
-    {
-        var total = await repo.CountAsync(search, status, ct);
-        var items = await repo.GetPagedAsync(page, size, search, status, includeDetails: false, ct);
-        return (items, total);
     }
 }

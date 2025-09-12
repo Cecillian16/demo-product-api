@@ -12,8 +12,13 @@ public static class DbSeeder
     private static readonly Guid VariantOptionColorId = Guid.Parse("20000000-0000-0000-0000-000000000001");
     private static readonly Guid VariantValueRedId = Guid.Parse("20000000-0000-0000-0000-000000000101");
     private static readonly Guid VariantValueBlueId = Guid.Parse("20000000-0000-0000-0000-000000000102");
+    private static readonly Guid VariantValueGreenId = Guid.Parse("20000000-0000-0000-0000-000000000103");
+    private static readonly Guid VariantValueBlackId = Guid.Parse("20000000-0000-0000-0000-000000000104");
     private static readonly Guid ProductItemRedId = Guid.Parse("30000000-0000-0000-0000-000000000101");
     private static readonly Guid ProductItemBlueId = Guid.Parse("30000000-0000-0000-0000-000000000102");
+    private static readonly Guid ProductItemGreenId = Guid.Parse("30000000-0000-0000-0000-000000000103");
+    private static readonly Guid ProductItemBlueSId = Guid.Parse("30000000-0000-0000-0000-000000000104");
+    private static readonly Guid ProductItemBlackId = Guid.Parse("30000000-0000-0000-0000-000000000105");
 
     // LOCATIONS
     private static readonly Guid MainWarehouseId = Guid.Parse("40000000-0000-0000-0000-000000000001");
@@ -84,11 +89,25 @@ public static class DbSeeder
                     VariantOptionId = VariantOptionColorId,
                     Value = "Blue",
                     Code = "BLUE"
+                },
+                new VariantOptionValue
+                {
+                    VariantOptionValueId = VariantValueGreenId,
+                    VariantOptionId = VariantOptionColorId,
+                    Value = "Green",
+                    Code = "GREEN"
+                },
+                new VariantOptionValue
+                {
+                    VariantOptionValueId = VariantValueBlackId,
+                    VariantOptionId = VariantOptionColorId,
+                    Value = "Black",
+                    Code = "BLACK"
                 });
         }
 
         // PRODUCT ITEMS (SKU variants)
-        if (!await db.ProductItems.AnyAsync(i => i.ProductItemId == ProductItemRedId, ct))
+        if (!await db.ProductItems.AnyAsync(i => i.ProductItemId == ProductItemBlackId, ct))
         {
             db.ProductItems.AddRange(
                 new ProductItem
@@ -112,6 +131,42 @@ public static class DbSeeder
                     Status = Status.Active,
                     Weight = 0.25m,
                     Volume = 0.0015m,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                },
+                new ProductItem
+                {
+                    ProductItemId = ProductItemGreenId,
+                    ProductId = ProductId,
+                    Sku = "TSH-GRN-L",
+                    Barcode = "BAR-GRN-L",
+                    Status = Status.Active,
+                    Weight = 0.25m,
+                    Volume = 0.0018m,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                },
+                new ProductItem
+                {
+                    ProductItemId = ProductItemBlueSId,
+                    ProductId = ProductId,
+                    Sku = "TSH-BLU-S",
+                    Barcode = "BAR-BLU-S",
+                    Status = Status.Active,
+                    Weight = 0.25m,
+                    Volume = 0.0010m,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                },
+                new ProductItem
+                {
+                    ProductItemId = ProductItemBlackId,
+                    ProductId = ProductId,
+                    Sku = "TSH-BLK-XL",
+                    Barcode = "BAR-BLK-XL",
+                    Status = Status.Active,
+                    Weight = 0.25m,
+                    Volume = 0.0020m,
                     CreatedAt = now,
                     UpdatedAt = now
                 });
@@ -263,35 +318,18 @@ public static class DbSeeder
             db.BundleItems.AddRange(
                 new BundleItem
                 {
+                    Id = Guid.NewGuid(),
                     BundleId = BundleStarterId,
-                    ChildId = ProductItemRedId, // product item
+                    ChildProductItemId = ProductItemRedId,
                     Quantity = 1m
                 },
                 new BundleItem
                 {
+                    Id = Guid.NewGuid(),
                     BundleId = BundleFamilyId,
-                    ChildId = BundleStarterId, // child bundle
-                    Quantity = 1m
-                },
-                new BundleItem
-                {
-                    BundleId = BundleFamilyId,
-                    ChildId = ProductItemBlueId, // product item
+                    ChildProductItemId = ProductItemBlueId,
                     Quantity = 1m
                 });
-        }
-
-        // BUNDLE PRICING RULE (Example: 10% off list)
-        if (!await db.BundlePricingRules.AnyAsync(r => r.BundlePricingRuleId == BundlePricingRuleId, ct))
-        {
-            db.BundlePricingRules.Add(new BundlePricingRule
-            {
-                BundlePricingRuleId = BundlePricingRuleId,
-                BundleId = BundleFamilyId,
-                RuleType = BundlePricingRuleType.PercentOff,
-                PercentOff = 10m,
-                ApplyTo = ApplyToScope.RequiredOnly
-            });
         }
 
         // Bundle price (after creating bundle rows so foreign relationships exist logically)

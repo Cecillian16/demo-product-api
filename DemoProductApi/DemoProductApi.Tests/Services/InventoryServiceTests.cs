@@ -1,4 +1,3 @@
-using DemoProductApi.Application.Interfaces.Services;
 using DemoProductApi.Application.Models.Requests;
 using DemoProductApi.Application.Repositories;
 using DemoProductApi.Application.Services;
@@ -17,13 +16,13 @@ namespace DemoProductApi.Tests.Services;
 [TestFixture]
 public class InventoryServiceTests
 {
-    private Mock<IInventoryRepository> _repo = null!;
+    private Mock<IGenericRepository<Inventory>> _repo = null!;
     private InventoryService _svc = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _repo = new Mock<IInventoryRepository>(MockBehavior.Strict);
+        _repo = new Mock<IGenericRepository<Inventory>>(MockBehavior.Strict);
         _svc = new InventoryService(_repo.Object);
     }
 
@@ -42,7 +41,7 @@ public class InventoryServiceTests
     public async Task GetAsync_NotFound_ReturnsNull()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, false, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Inventory?)null);
         var inv = await _svc.GetAsync(id);
         inv.Should().BeNull();
@@ -96,7 +95,7 @@ public class InventoryServiceTests
     public async Task UpdateAsync_NotFound_ReturnsFalse()
     {
         var inv = TestBuilders.NewInventory();
-        _repo.Setup(r => r.GetByIdAsync(inv.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(inv.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Inventory?)null);
         var ok = await _svc.UpdateAsync(inv.Id, inv);
         ok.Should().BeFalse();
@@ -110,7 +109,7 @@ public class InventoryServiceTests
         var incoming = TestBuilders.NewInventory(existing.Id);
         incoming.OnHand = existing.OnHand + 5;
 
-        _repo.Setup(r => r.GetByIdAsync(existing.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(existing.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
         _repo.Setup(r => r.Update(existing));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -126,7 +125,7 @@ public class InventoryServiceTests
     public async Task DeleteAsync_NotFound_ReturnsFalse()
     {
         var id = Guid.NewGuid();
-        _repo.Setup(r => r.GetByIdAsync(id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Inventory?)null);
         var ok = await _svc.DeleteAsync(id);
         ok.Should().BeFalse();
@@ -137,7 +136,7 @@ public class InventoryServiceTests
     public async Task DeleteAsync_Success()
     {
         var existing = TestBuilders.NewInventory();
-        _repo.Setup(r => r.GetByIdAsync(existing.Id, true, It.IsAny<CancellationToken>()))
+        _repo.Setup(r => r.GetByIdAsync(existing.Id, It.IsAny<CancellationToken>()))
              .ReturnsAsync(existing);
         _repo.Setup(r => r.Remove(existing));
         _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
