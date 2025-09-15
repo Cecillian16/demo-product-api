@@ -36,7 +36,7 @@ public class BundleServiceTests
         var id = Guid.NewGuid();
         _repo.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
              .ReturnsAsync((Bundle?)null);
-        var dto = await _svc.GetAsync(id);
+        var dto = await _svc.GetByIdAsync(id);
         dto.Should().BeNull();
         _repo.VerifyAll();
     }

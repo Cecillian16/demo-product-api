@@ -15,7 +15,7 @@ public class ProductController(IProductService service) : ControllerBase
         Ok(await service.GetAllAsync(ct));
 
     // GET: api/product/{id}
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:guid}", Name = "GetProductById")]
     public async Task<ActionResult<ProductDto>> GetProductByIdAsync(Guid id, CancellationToken ct)
     {
         var dto = await service.GetAsync(id, ct);
@@ -27,7 +27,7 @@ public class ProductController(IProductService service) : ControllerBase
     public async Task<ActionResult<ProductDto>> CreateProductAsync(ProductCreateRequest request, CancellationToken ct)
     {
         var created = await service.CreateAsync(request, ct);
-        return CreatedAtAction(nameof(GetProductByIdAsync), new { id = created.ProductId }, created);
+        return CreatedAtRoute("GetProductById", new { id = created.ProductId }, created);
     }
 
     // PUT: api/product/{id}

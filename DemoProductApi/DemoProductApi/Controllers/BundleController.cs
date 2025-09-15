@@ -16,7 +16,7 @@ public class BundleController(IBundleService service) : ControllerBase
     [HttpGet("{id:guid}", Name = "GetBundleById")]
     public async Task<ActionResult<BundleDto>> GetBundleByIdAsync(Guid id, CancellationToken ct)
     {
-        var dto = await service.GetAsync(id, ct);
+        var dto = await service.GetByIdAsync(id, ct);
         return dto == null ? NotFound() : Ok(dto);
     }
 

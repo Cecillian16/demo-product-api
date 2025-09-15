@@ -14,7 +14,7 @@ public class BundleService(IGenericRepository<Bundle> repo, IBundleRepository br
         return entities.Select(BundleMapper.ToDto).ToList();
     }
 
-    public async Task<BundleDto?> GetAsync(Guid id, CancellationToken ct = default)
+    public async Task<BundleDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await repo.GetByIdAsync(id, ct);
         return entity is null ? null : BundleMapper.ToDto(entity);
