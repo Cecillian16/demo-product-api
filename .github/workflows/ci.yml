@@ -77,14 +77,38 @@ jobs:
         run: dotnet restore
       - name: Build API
         run: dotnet build -c Release
-      - name: Start API
+      - name: Start API (background)
         run: |
           dotnet run --project DemoProductApi/DemoProductApi.csproj &
-          sleep 5
+          echo "Waiting for API to respond on http://localhost:5000..."
+          for i in {1..30}; do
+            if curl -sS --fail http://localhost:5000/healthz >/dev/null 2>&1; then
+              echo "API is up"; break
+            fi
+            sleep 2
+          done
       - name: Install Node deps (root)
         run: |
           npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Run Playwright E2E smoke
+      - name: Run Playwright E2E
         run: npm run e2e
+        env:
+          E2E_BASE_URL: http://127.0.0.1:5000
+
+      - name: Upload Playwright reports (HTML & JUnit)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports
+          path: |
+            tests/results/playwright-junit.xml
+            tests/results/playwright-report/**
+
+      - name: Publish Playwright JUnit to test-reporter
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: playwright-e2e
+          path: tests/results/playwright-junit.xml
