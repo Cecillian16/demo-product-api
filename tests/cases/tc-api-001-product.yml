@@ -1,0 +1,32 @@
+id: TC-API-001
+title: Create Product and verify retrieval
+component: Product
+priority: high
+preconditions:
+  - API server is running at http://localhost:5000
+  - Database is migrated and seeded (or empty)
+steps:
+  - step: POST /api/product with valid ProductCreateRequest
+    request:
+      method: POST
+      path: /api/product
+      body:
+        name: "Test Product X"
+        skuPrefix: "TPX"
+        description: "Created by E2E test"
+        status: 1
+        variantOptions:
+          - name: "Color"
+            values:
+              - value: "Red"
+              - value: "Blue"
+  - step: Assert response status is 201 Created
+  - step: Extract created ProductId from response
+  - step: GET /api/product/{id} and assert returned fields match request
+expected:
+  - created: status 201
+  - get: status 200
+  - get.body.name == "Test Product X"
+  - get.body.variantOptions length >= 1
+notes: |
+  This case verifies the create + fetch happy path for products.

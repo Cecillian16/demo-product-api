@@ -1,0 +1,25 @@
+id: TC-API-002
+title: Create ProductItem and verify retrieval
+component: ProductItem
+priority: high
+preconditions:
+  - A Product exists (created previously or seeded)
+steps:
+  - step: POST /api/productitem with valid ProductItemCreateRequest
+    request:
+      method: POST
+      path: /api/productitem
+      body:
+        productId: "<use existing product id>"
+        sku: "TPX-ITEM-001"
+        status: 1
+        weight: 1.2
+        volume: 0.5
+        variantValues: []
+  - step: Assert response status is 201 Created
+  - step: Extract ProductItemId
+  - step: GET /api/productitem/{id} and assert returned fields
+expected:
+  - created: status 201
+  - get: status 200
+  - get.body.sku == "TPX-ITEM-001"

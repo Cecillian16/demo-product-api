@@ -1,0 +1,18 @@
+id: TC-API-001
+title: Create product and verify retrieval
+preconditions:
+  - DB migrated
+  - Admin account seeded
+steps:
+  - method: POST
+    endpoint: /api/products
+    payload:
+      name: "Test product"
+      sku: "TP-001"
+  - method: GET
+    endpoint: /api/products/{id}
+expected:
+  - status: 201
+  - body_contains:
+      name: "Test product"
+      sku: "TP-001"

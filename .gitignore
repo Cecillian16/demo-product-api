@@ -60,3 +60,6 @@ nunit-*.xml
 
 # Sonarqube
 .sonarqube/
+
+# Node_modules
+node_modules/*

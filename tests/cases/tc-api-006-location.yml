@@ -1,0 +1,20 @@
+id: TC-API-006
+title: Create Location and verify
+component: Location
+priority: low
+preconditions:
+  - None
+steps:
+  - step: POST /api/location with valid LocationCreateRequest
+    request:
+      method: POST
+      path: /api/location
+      body:
+        name: "E2E Warehouse"
+        address: "123 Test Ave"
+  - step: Assert response status 201
+  - step: GET /api/location/{id} and assert returned fields
+expected:
+  - created: status 201
+  - get: status 200
+  - get.body.name == "E2E Warehouse"

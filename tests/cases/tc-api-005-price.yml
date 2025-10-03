@@ -1,0 +1,24 @@
+id: TC-API-005
+title: Create Price and verify
+component: Price
+priority: medium
+preconditions:
+  - A Product or ProductItem exists to attach price
+steps:
+  - step: POST /api/price with valid PriceCreateRequest
+    request:
+      method: POST
+      path: /api/price
+      body:
+        entityType: 1
+        entityId: "<entity id>"
+        currency: "USD"
+        listPrice: 100.0
+        salePrice: 90.0
+        validFrom: "2025-01-01"
+  - step: Assert response status 201
+  - step: GET /api/price/{id} and assert returned fields
+expected:
+  - created: status 201
+  - get: status 200
+  - get.body.listPrice == 100.0

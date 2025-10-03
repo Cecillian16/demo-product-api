@@ -1,0 +1,24 @@
+id: TC-API-003
+title: Create Bundle (single) and verify
+component: Bundle
+priority: medium
+preconditions:
+  - At least one ProductItem exists
+steps:
+  - step: POST /api/bundle with valid BundleCreateRequest
+    request:
+      method: POST
+      path: /api/bundle
+      body:
+        name: "Test Bundle A"
+        description: "Bundle created by E2E"
+        status: 1
+        items:
+          - childProductItemId: "<product item id>"
+            quantity: 2
+  - step: Assert response status 201
+  - step: GET /api/bundle/{id} and assert returned fields
+expected:
+  - created: status 201
+  - get: status 200
+  - get.body.items length >= 1

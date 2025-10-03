@@ -13,16 +13,36 @@ WebApp: [https://github.com/SaharatKo/demo-product-webapp]
 - Docker - optional
 
 # My Approach
-- Clean (Layered) Architecture
-- Repository Pattern
-- EF Core + Dapper
-- FluentValidation
-- Dependency Injection
-- Swagger Integration
 
 # Database Diagram
 
 ```mermaid
+
+
+## Running TypeScript unit tests (local)
+
+This repository includes a lightweight TypeScript/Jest unit test setup under `test/unit`.
+
+Install dev dependencies (from repo root):
+
+```bash
+npm install
+```
+
+Run unit tests:
+
+```bash
+npm run test:unit
+```
+
+Generate coverage (text, html, lcov) and JUnit report:
+
+```bash
+npm run coverage
+
+# Coverage output: ./coverage/unit (html + lcov)
+# JUnit output: ./coverage/junit-unit.xml
+```
 
 erDiagram
   Product ||--o{ VariantOption : "has options"

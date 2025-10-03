@@ -1,0 +1,24 @@
+id: TC-API-004
+title: Create Inventory record and verify
+component: Inventory
+priority: medium
+preconditions:
+  - ProductItem and Location exist
+steps:
+  - step: POST /api/inventory with valid InventoryCreateRequest
+    request:
+      method: POST
+      path: /api/inventory
+      body:
+        productItemId: "<product item id>"
+        locationId: "<location id>"
+        onHand: 10
+        reserved: 1
+        inTransit: 0
+        reorderPoint: 5
+  - step: Assert response status 201
+  - step: GET /api/inventory/{id} and assert returned fields
+expected:
+  - created: status 201
+  - get: status 200
+  - get.body.onHand == 10
