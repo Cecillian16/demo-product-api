@@ -1,46 +1,46 @@
-<testsuites id="" name="" tests="11" failures="0" skipped="0" errors="0" time="1.9277689999999998">
-<testsuite name="tests/api.e2e.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.932" errors="0">
-<testcase name="API E2E - full flow › product -&gt; productItem -&gt; location -&gt; inventory -&gt; price -&gt; bundle" classname="tests/api.e2e.spec.ts" time="0.932">
+<testsuites id="" name="" tests="11" failures="0" skipped="0" errors="0" time="4.208625">
+<testsuite name="tests/api.e2e.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.147" errors="0">
+<testcase name="API E2E - full flow › product -&gt; productItem -&gt; location -&gt; inventory -&gt; price -&gt; bundle" classname="tests/api.e2e.spec.ts" time="3.147">
 </testcase>
 </testsuite>
-<testsuite name="tests/bundle-bulk.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.968" errors="0">
-<testcase name="Bundle bulk create and cleanup" classname="tests/bundle-bulk.spec.ts" time="0.968">
+<testsuite name="tests/bundle-bulk.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.178" errors="0">
+<testcase name="Bundle bulk create and cleanup" classname="tests/bundle-bulk.spec.ts" time="3.178">
 </testcase>
 </testsuite>
-<testsuite name="tests/bundle-invalid.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="2" failures="0" skipped="0" time="0.842" errors="0">
-<testcase name="Bundle invalid: create with missing items array" classname="tests/bundle-invalid.spec.ts" time="0.769">
+<testsuite name="tests/bundle-invalid.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="2" failures="0" skipped="0" time="2.981" errors="0">
+<testcase name="Bundle invalid: create with missing items array" classname="tests/bundle-invalid.spec.ts" time="2.768">
 <system-err>
-<![CDATA[Bundle create accepted unexpected status [33m201[39m {"bundleId":"3a9e068d-ac45-411d-84e4-15be93b208f3","name":"B","description":null,"status":1,"createdAt":"2025-10-03T04:24:38.5776208+00:00","updatedAt":"2025-10-03T04:24:38.5776208+00:00","items":[]}
+<![CDATA[Bundle create accepted unexpected status [33m201[39m {"bundleId":"4ed55d5d-2843-43cf-b9c6-f5b205223616","name":"B","description":null,"status":1,"createdAt":"2025-10-03T06:46:50.9415556+00:00","updatedAt":"2025-10-03T06:46:50.9415556+00:00","items":[]}
 ]]>
 </system-err>
 </testcase>
-<testcase name="Bundle delete non-existent -&gt; 404" classname="tests/bundle-invalid.spec.ts" time="0.073">
+<testcase name="Bundle delete non-existent -&gt; 404" classname="tests/bundle-invalid.spec.ts" time="0.213">
 </testcase>
 </testsuite>
-<testsuite name="tests/bundle.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.978" errors="0">
-<testcase name="Bundle create/get/delete" classname="tests/bundle.spec.ts" time="0.978">
+<testsuite name="tests/bundle.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.248" errors="0">
+<testcase name="Bundle create/get/delete" classname="tests/bundle.spec.ts" time="3.248">
 </testcase>
 </testsuite>
-<testsuite name="tests/product-invalid.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.199" errors="0">
-<testcase name="Product invalid values: too long name and empty skuPrefix" classname="tests/product-invalid.spec.ts" time="0.199">
+<testsuite name="tests/product-invalid.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.292" errors="0">
+<testcase name="Product invalid values: too long name and empty skuPrefix" classname="tests/product-invalid.spec.ts" time="0.292">
 </testcase>
 </testsuite>
-<testsuite name="tests/product-negative.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.021" errors="0">
-<testcase name="Product negative: missing required fields" classname="tests/product-negative.spec.ts" time="0.021">
+<testsuite name="tests/product-negative.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.028" errors="0">
+<testcase name="Product negative: missing required fields" classname="tests/product-negative.spec.ts" time="0.028">
 </testcase>
 </testsuite>
-<testsuite name="tests/product.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.143" errors="0">
-<testcase name="Product create/get/update/delete" classname="tests/product.spec.ts" time="0.143">
+<testsuite name="tests/product.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.122" errors="0">
+<testcase name="Product create/get/update/delete" classname="tests/product.spec.ts" time="0.122">
 </testcase>
 </testsuite>
-<testsuite name="tests/productitem-invalid.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="2" failures="0" skipped="0" time="0.092" errors="0">
-<testcase name="ProductItem invalid: create with non-existent productId" classname="tests/productitem-invalid.spec.ts" time="0.077">
+<testsuite name="tests/productitem-invalid.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="2" failures="0" skipped="0" time="0.113" errors="0">
+<testcase name="ProductItem invalid: create with non-existent productId" classname="tests/productitem-invalid.spec.ts" time="0.086">
 </testcase>
-<testcase name="ProductItem update non-existent -&gt; 404" classname="tests/productitem-invalid.spec.ts" time="0.015">
+<testcase name="ProductItem update non-existent -&gt; 404" classname="tests/productitem-invalid.spec.ts" time="0.027">
 </testcase>
 </testsuite>
-<testsuite name="tests/productitem.spec.ts" timestamp="2025-10-03T04:24:37.624Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.141" errors="0">
-<testcase name="ProductItem create/get/update/delete" classname="tests/productitem.spec.ts" time="0.141">
+<testsuite name="tests/productitem.spec.ts" timestamp="2025-10-03T06:46:48.476Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.11" errors="0">
+<testcase name="ProductItem create/get/update/delete" classname="tests/productitem.spec.ts" time="0.11">
 </testcase>
 </testsuite>
 </testsuites>
